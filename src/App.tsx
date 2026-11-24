@@ -202,7 +202,7 @@ const AppShell: React.FC = () => {
             </div>
           </div>
 
-          <PWAInstallButton />
+          <PWAInstallButton alwaysShow />
 
           <button
             type="button"

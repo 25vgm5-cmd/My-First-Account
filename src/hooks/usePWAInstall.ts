@@ -5,46 +5,82 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{outcome: 'accepted' | 'dismissed'; platform: string}>;
 }
 
+// Capture install events globally at module load so events fired during LockScreen/loading are never missed
+let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
+let globalIsInstalled = false;
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  listeners.forEach((fn) => fn());
+}
+
+if (typeof window !== 'undefined') {
+  globalIsInstalled =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as unknown as {standalone?: boolean}).standalone === true;
+
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault();
+    globalDeferredPrompt = e as BeforeInstallPromptEvent;
+    notifyListeners();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    globalIsInstalled = true;
+    globalDeferredPrompt = null;
+    notifyListeners();
+  });
+}
+
 export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
+    globalDeferredPrompt
+  );
+  const [isInstalled, setIsInstalled] = useState(globalIsInstalled);
   const [isIOS, setIsIOS] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as {standalone?: boolean}).standalone === true;
-    setIsInstalled(isStandalone);
+    const sync = () => {
+      setDeferredPrompt(globalDeferredPrompt);
+      setIsInstalled(globalIsInstalled);
+    };
+    listeners.add(sync);
+    sync();
 
     const userAgent = window.navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(userAgent));
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
+    try {
+      setIsInIframe(window.self !== window.top);
+    } catch {
+      setIsInIframe(true);
+    }
 
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
+    const media = window.matchMedia('(display-mode: standalone)');
+    const handleDisplayChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        globalIsInstalled = true;
+        globalDeferredPrompt = null;
+        notifyListeners();
+      }
     };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    media.addEventListener?.('change', handleDisplayChange);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      listeners.delete(sync);
+      media.removeEventListener?.('change', handleDisplayChange);
     };
   }, []);
 
   const install = async () => {
-    if (!deferredPrompt) return false;
-    await deferredPrompt.prompt();
-    const {outcome} = await deferredPrompt.userChoice;
+    if (!globalDeferredPrompt) return false;
+    await globalDeferredPrompt.prompt();
+    const {outcome} = await globalDeferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
+      globalIsInstalled = true;
+      globalDeferredPrompt = null;
+      notifyListeners();
       return true;
     }
     return false;
@@ -54,6 +90,7 @@ export function usePWAInstall() {
     isInstallable: Boolean(deferredPrompt),
     isInstalled,
     isIOS,
+    isInIframe,
     install,
   };
 }

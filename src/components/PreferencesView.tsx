@@ -31,13 +31,31 @@ export const PreferencesView: React.FC = () => {
 
   useEffect(() => {
     setLanguage(settings.language);
+  }, [settings.language]);
+
+  useEffect(() => {
     setCurrency(settings.currency);
+  }, [settings.currency]);
+
+  useEffect(() => {
     setDateFormat(settings.dateFormat);
+  }, [settings.dateFormat]);
+
+  useEffect(() => {
     setNumberFormat(settings.numberFormat);
+  }, [settings.numberFormat]);
+
+  useEffect(() => {
     setThemeMode(settings.theme);
+  }, [settings.theme]);
+
+  useEffect(() => {
     setOpeningBalance(String(settings.openingBalance));
+  }, [settings.openingBalance]);
+
+  useEffect(() => {
     setOpeningBalanceDate(settings.openingBalanceDate);
-  }, [settings]);
+  }, [settings.openingBalanceDate]);
 
   const parsedBalance = parseFloat(openingBalance || '0');
   const hasUnsavedChanges =
@@ -45,7 +63,6 @@ export const PreferencesView: React.FC = () => {
     currency !== settings.currency ||
     dateFormat !== settings.dateFormat ||
     numberFormat !== settings.numberFormat ||
-    themeMode !== settings.theme ||
     parsedBalance !== settings.openingBalance ||
     openingBalanceDate !== settings.openingBalanceDate;
 
@@ -62,15 +79,11 @@ export const PreferencesView: React.FC = () => {
 
     setSaving(true);
     try {
-      if (themeMode !== settings.theme) {
-        await setTheme(themeMode);
-      }
       await updateSettings({
         language,
         currency,
         dateFormat,
         numberFormat,
-        theme: themeMode,
         openingBalance: val,
         openingBalanceDate,
       });
@@ -94,7 +107,7 @@ export const PreferencesView: React.FC = () => {
             Customize language, currency, theme, date &amp; number formatting, opening balance, and categories.
           </p>
         </div>
-        <PWAInstallButton />
+        <PWAInstallButton alwaysShow />
       </div>
 
       <form onSubmit={handleSavePreferences} className="space-y-6">
@@ -181,7 +194,7 @@ export const PreferencesView: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setThemeMode(mode);
-                      setSavedMsg('');
+                      void setTheme(mode);
                     }}
                     className={`flex items-center justify-between rounded-xl border p-4 text-left min-h-[52px] ${
                       themeMode === mode

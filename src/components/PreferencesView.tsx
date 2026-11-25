@@ -1,3 +1,4 @@
+import {Capacitor} from '@capacitor/core';
 import React, {useEffect, useState} from 'react';
 import {
   Check,
@@ -154,6 +155,10 @@ export const PreferencesView: React.FC = () => {
     setCheckingUpdate(true);
     setUpdateCheckStatus('');
     try {
+      if (Capacitor.isNativePlatform()) {
+        setUpdateCheckStatus(`Running v${APP_VERSION} (Android APK). Install a newer APK build to update.`);
+        return;
+      }
       if (!('serviceWorker' in navigator)) {
         setUpdateCheckStatus(`Running v${APP_VERSION}.`);
         return;

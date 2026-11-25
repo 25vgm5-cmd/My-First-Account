@@ -1,1 +1,75 @@
+name: Build MyFirst Account Android APK
 
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Initialize Capacitor Android project
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Apply MyFirst Account launcher icons
+        run: |
+          if [ -f "public/pwa-512x512.png" ]; then
+            FOREGROUND_ICON="public/pwa-512x512.png"
+            if [ -f "public/pwa-maskable-512x512.png" ]; then
+              FOREGROUND_ICON="public/pwa-maskable-512x512.png"
+            fi
+            for dir in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
+              if [ -d "$dir" ]; then
+                cp -f public/pwa-512x512.png "$dir/ic_launcher.png"
+                cp -f public/pwa-512x512.png "$dir/ic_launcher_round.png"
+                cp -f "$FOREGROUND_ICON" "$dir/ic_launcher_foreground.png"
+              fi
+            done
+          fi
+        continue-on-error: true
+
+      - name: Sync Capacitor Android assets & plugins
+        run: npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyFirst-Account-Debug-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

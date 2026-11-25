@@ -23,8 +23,10 @@
   --expense-text: #FB7185;
   --warning-text: #FBBF24;
   --brand-blue: #38BDF8;
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
   --mobile-header-height: 3rem;
-  --mobile-header-offset: calc(var(--mobile-header-height) + env(safe-area-inset-top, 0px));
+  --mobile-header-offset: calc(var(--mobile-header-height) + var(--safe-top));
   --zoom-titles-mobile: 1;
   --zoom-amounts-mobile: 1;
   --zoom-lists-mobile: 1;
@@ -204,7 +206,7 @@ html.theme-dark {
 }
 
 .app-mobile-header {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top);
 }
 
 .app-sticky-header {
@@ -273,13 +275,17 @@ html.theme-dark {
   transform: translateY(0) scale(0.995);
 }
 
-/* Safe area padding for mobile PWAs */
+/* Safe area padding for mobile PWAs & Capacitor APK */
 .pt-safe {
-  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-top: max(1rem, var(--safe-top));
 }
 
 .pb-safe {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(0.5rem, var(--safe-bottom));
+}
+
+.pb-nav-safe {
+  padding-bottom: calc(5rem + var(--safe-bottom));
 }
 
 /* Targeted Typography Zoom (Head & Titles, Display Amounts, Record Lists) */

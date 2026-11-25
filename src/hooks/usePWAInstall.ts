@@ -1,3 +1,4 @@
+import {Capacitor} from '@capacitor/core';
 import {useEffect, useState} from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -16,6 +17,7 @@ function notifyListeners() {
 
 if (typeof window !== 'undefined') {
   globalIsInstalled =
+    Capacitor.isNativePlatform() ||
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as unknown as {standalone?: boolean}).standalone === true;
 

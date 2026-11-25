@@ -1,19 +1,13 @@
 import React, {useState} from 'react';
-import {Download, Minus, Plus, Upload} from 'lucide-react';
+import {Download, Minus, Plus, Upload, X} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
 import {getTodayISO} from '../utils/formatters';
+import {downloadBlobFile} from '../utils/nativeExport';
 
-function downloadJsonFile(data: unknown, filename: string) {
+async function downloadJsonFile(data: unknown, filename: string) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  await downloadBlobFile(blob, filename);
 }
 
 export const BackupView: React.FC = () => {
@@ -45,6 +39,9 @@ export const BackupView: React.FC = () => {
 
   const [showManualBackup, setShowManualBackup] = useState(false);
   const [showRestoreBackup, setShowRestoreBackup] = useState(false);
+  const [pendingSnap, setPendingSnap] = useState<(typeof autoBackups)[number] | null>(null);
+  const [snapPassword, setSnapPassword] = useState('');
+  const [downloadingSnap, setDownloadingSnap] = useState(false);
 
   const clearFeedback = () => {
     setNotice('');
@@ -61,8 +58,8 @@ export const BackupView: React.FC = () => {
     setExporting(true);
     try {
       const encrypted = await exportEncryptedBackup(backupPassword);
-      downloadJsonFile(encrypted, `MyFirstAccount_Backup_${getTodayISO()}.mfa`);
-      setNotice('AES-256-GCM encrypted backup file downloaded.');
+      await downloadJsonFile(encrypted, `MyFirstAccount_Backup_${getTodayISO()}.mfa`);
+      setNotice('AES-256-GCM encrypted backup saved / ready.');
       setBackupPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Backup export failed.');
@@ -355,17 +352,10 @@ export const BackupView: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={async () => {
-                    const pw = window.prompt(
-                      'Enter a password (min 8 chars) to encrypt this downloaded backup file:'
-                    );
-                    if (!pw || pw.length < 8) {
-                      setError('Download cancelled: password must be at least 8 characters.');
-                      return;
-                    }
-                    const fileObj = await downloadAutoBackupSnapshot(snap, pw);
-                    downloadJsonFile(fileObj, `MyFirstAccount_AutoBackup_${snap.monthKey}.mfa`);
-                    setNotice(`Downloaded encrypted snapshot for ${snap.monthKey}.`);
+                  onClick={() => {
+                    clearFeedback();
+                    setSnapPassword('');
+                    setPendingSnap(snap);
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-1.5 text-xs font-medium min-h-[36px]"
                 >
@@ -377,6 +367,84 @@ export const BackupView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Password Modal for Encrypted Monthly Snapshot Download */}
+      {pendingSnap && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              clearFeedback();
+              if (snapPassword.length < 8) {
+                setError('Download cancelled: password must be at least 8 characters.');
+                return;
+              }
+              setDownloadingSnap(true);
+              try {
+                const fileObj = await downloadAutoBackupSnapshot(pendingSnap, snapPassword);
+                await downloadJsonFile(fileObj, `MyFirstAccount_AutoBackup_${pendingSnap.monthKey}.mfa`);
+                setNotice(`Encrypted snapshot for ${pendingSnap.monthKey} exported.`);
+                setPendingSnap(null);
+                setSnapPassword('');
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Snapshot export failed.');
+              } finally {
+                setDownloadingSnap(false);
+              }
+            }}
+            className="w-full max-w-md rounded-2xl border app-border app-surface p-5 space-y-4 animate-mfa-modal"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-base font-semibold">Encrypt Snapshot ({pendingSnap.monthKey})</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingSnap(null);
+                  setSnapPassword('');
+                }}
+                className="p-1.5 rounded-lg app-text-muted hover:opacity-80"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs app-text-muted">
+              Enter a password (min 8 characters) to encrypt this downloaded <span className="font-mono-tabular">.mfa</span> snapshot.
+            </p>
+            <input
+              type="password"
+              value={snapPassword}
+              onChange={(e) => setSnapPassword(e.target.value)}
+              placeholder="Minimum 8 characters..."
+              autoComplete="new-password"
+              minLength={8}
+              required
+              autoFocus
+              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingSnap(null);
+                  setSnapPassword('');
+                }}
+                className="rounded-lg border app-border px-4 py-2 text-xs font-medium min-h-[38px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={downloadingSnap}
+                className="rounded-lg px-4 py-2 text-xs font-semibold text-white min-h-[38px]"
+                style={{backgroundColor: 'var(--accent-primary)'}}
+              >
+                {downloadingSnap ? 'Encrypting...' : 'Download .mfa'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

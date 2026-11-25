@@ -41,7 +41,7 @@ jobs:
             npx cap add android
           fi
 
-      - name: Apply MyFirst Account launcher icons
+      - name: Apply MyFirst App launcher icons
         run: |
           if [ -f "public/pwa-512x512.png" ]; then
             FOREGROUND_ICON="public/pwa-512x512.png"
@@ -69,7 +69,7 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyFirst-Account-Debug-APK
+          name: MyFirst-App-Debug-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30

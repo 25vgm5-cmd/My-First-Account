@@ -91,7 +91,7 @@ export const LockScreen: React.FC = () => {
   const pinLockedOut = (vaultMeta?.pinFailedAttempts || 0) >= 3;
 
   return (
-    <div className="min-h-screen app-canvas flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen app-canvas flex flex-col items-center justify-center p-4 pt-safe">
       <div className="w-full max-w-md rounded-2xl border app-surface p-6 sm:p-8 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

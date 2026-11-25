@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {Check, Lock, Pencil, Plus, Trash2, X} from 'lucide-react';
+import {Check, Lock, Minus, Pencil, Plus, Trash2, X} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
 import type {Category, TransactionType} from '../types/finance';
@@ -17,6 +17,10 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [error, setError] = useState('');
+
+  const [showCategories, setShowCategories] = useState(!embedded);
+  const [showIncomeCats, setShowIncomeCats] = useState(false);
+  const [showExpenseCats, setShowExpenseCats] = useState(false);
 
   const incomeCategories = useMemo(
     () => categories.filter((c) => c.type === 'income'),
@@ -79,35 +83,52 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
     type: TransactionType,
     list: Category[],
     inputVal: string,
-    setInputVal: (v: string) => void
+    setInputVal: (v: string) => void,
+    isOpen: boolean,
+    onToggle: () => void
   ) => (
-    <div className="rounded-xl border app-surface p-5 space-y-4">
-      <div>
-        <h2 className="text-base font-semibold">{title}</h2>
-        <p className="text-xs app-text-muted mt-0.5">
-          Add, rename, or delete custom categories. &ldquo;Others&rdquo; is a mandatory fixed fallback category.
-        </p>
-      </div>
+    <div className="rounded-xl border app-surface p-5">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="w-full flex items-center justify-between gap-3 text-left"
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold">{title}</h2>
+            <span className="text-xs font-mono-tabular app-text-muted">({list.length})</span>
+          </div>
+          <p className="text-xs app-text-muted mt-0.5">
+            Add, rename, or delete custom categories. &ldquo;Others&rdquo; is a mandatory fixed fallback category.
+          </p>
+        </div>
+        <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+          {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </span>
+      </button>
 
-      <form onSubmit={(e) => void handleAdd(type, e)} className="flex gap-2">
-        <input
-          type="text"
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-          placeholder={`New ${type} category...`}
-          className="flex-1 rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-        />
-        <button
-          type="submit"
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white min-h-[42px] whitespace-nowrap shrink-0"
-          style={{backgroundColor: 'var(--accent-primary)'}}
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add</span>
-        </button>
-      </form>
+      {isOpen && (
+        <div className="mt-4 pt-4 border-t app-border space-y-4">
+          <form onSubmit={(e) => void handleAdd(type, e)} className="flex gap-2">
+            <input
+              type="text"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              placeholder={`New ${type} category...`}
+              className="flex-1 rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white min-h-[42px] whitespace-nowrap shrink-0"
+              style={{backgroundColor: 'var(--accent-primary)'}}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add</span>
+            </button>
+          </form>
 
-      <div className="divide-y app-border border-t app-border">
+          <div className="divide-y app-border border-t app-border">
         {list.map((cat) => {
           const isEditing = editingId === cat.id;
           const count = usageCountMap.get(cat.id) || 0;
@@ -177,32 +198,14 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
             </div>
           );
         })}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  return (
-    <div className={embedded ? 'space-y-6 pt-6 border-t app-border' : 'space-y-6'}>
-      {embedded ? (
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">
-            {t(settings.language, 'navCategories')}
-          </h2>
-          <p className="mt-1 text-xs sm:text-sm app-text-muted">
-            Deleting a custom category automatically reassigns its historical transactions to &ldquo;Others&rdquo;.
-          </p>
-        </div>
-      ) : (
-        <div className="pb-4 border-b app-border">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-            {t(settings.language, 'navCategories')}
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm app-text-muted">
-            Deleting a custom category automatically reassigns its historical transactions to &ldquo;Others&rdquo;.
-          </p>
-        </div>
-      )}
-
+  const categoriesGrid = (
+    <>
       {error && (
         <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
@@ -215,16 +218,66 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
           'income',
           incomeCategories,
           newIncomeName,
-          setNewIncomeName
+          setNewIncomeName,
+          showIncomeCats,
+          () => setShowIncomeCats((v) => !v)
         )}
         {renderSection(
           'Expense Categories',
           'expense',
           expenseCategories,
           newExpenseName,
-          setNewExpenseName
+          setNewExpenseName,
+          showExpenseCats,
+          () => setShowExpenseCats((v) => !v)
         )}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="rounded-xl border app-surface p-5">
+        <button
+          type="button"
+          onClick={() => setShowCategories((v) => !v)}
+          aria-expanded={showCategories}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold">{t(settings.language, 'navCategories')}</h2>
+              <span className="text-xs font-mono-tabular app-text-muted">
+                ({incomeCategories.length} income · {expenseCategories.length} expense)
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs app-text-muted">
+              Deleting a custom category automatically reassigns its historical transactions to &ldquo;Others&rdquo;.
+            </p>
+          </div>
+          <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+            {showCategories ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </span>
+        </button>
+
+        {showCategories && (
+          <div className="mt-5 pt-5 border-t app-border space-y-5">{categoriesGrid}</div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="pb-4 border-b app-border">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+          {t(settings.language, 'navCategories')}
+        </h1>
+        <p className="mt-1 text-xs sm:text-sm app-text-muted">
+          Deleting a custom category automatically reassigns its historical transactions to &ldquo;Others&rdquo;.
+        </p>
+      </div>
+      {categoriesGrid}
     </div>
   );
 };

@@ -158,7 +158,7 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen app-canvas flex flex-col items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen app-canvas flex flex-col items-center justify-center p-4 sm:p-6 pt-safe">
       <div className="w-full max-w-2xl rounded-2xl border app-surface p-6 sm:p-8 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b app-border">
           <div>

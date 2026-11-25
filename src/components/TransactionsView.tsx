@@ -214,7 +214,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       {/* Sticky Header + Filters Toolbar */}
       <div className="app-sticky-panel -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 md:pb-4 md:border-b app-border space-y-4">
         {/* Header */}
-        <div className="sticky top-13 z-20 app-canvas -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 md:static md:mt-0 md:pt-0 md:mx-0 md:px-0 flex flex-wrap items-center justify-between gap-4 pb-4 border-b app-border">
+        <div className="app-mobile-sticky-header -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mt-0 md:pt-0 md:mx-0 md:px-0 flex flex-wrap items-center justify-between gap-4 pb-4 border-b app-border">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
               {t(settings.language, 'navTransactions')}

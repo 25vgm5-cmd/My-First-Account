@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Download, Upload} from 'lucide-react';
+import {Download, Minus, Plus, Upload} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
 import {getTodayISO} from '../utils/formatters';
@@ -42,6 +42,9 @@ export const BackupView: React.FC = () => {
   const [restoreFileName, setRestoreFileName] = useState('');
   const [restorePassword, setRestorePassword] = useState('');
   const [restoring, setRestoring] = useState(false);
+
+  const [showManualBackup, setShowManualBackup] = useState(false);
+  const [showRestoreBackup, setShowRestoreBackup] = useState(false);
 
   const clearFeedback = () => {
     setNotice('');
@@ -128,134 +131,175 @@ export const BackupView: React.FC = () => {
       )}
 
       {/* Backup & Restore Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Manual Encrypted Backup */}
-        <form onSubmit={handleManualExport} className="rounded-xl border app-surface p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Download className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-base font-semibold">Manual Encrypted Backup</h2>
-          </div>
-          <p className="text-xs app-text-muted">
-            Creates an AES-256-GCM encrypted <span className="font-mono-tabular">.mfa</span> archive. You can protect backups with a separate password.
-          </p>
-
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
-            <button
-              type="button"
-              onClick={() => setBackupPasswordMode('separate')}
-              className={`py-2 text-xs font-medium rounded-md ${
-                backupPasswordMode === 'separate' ? 'bg-emerald-600 text-white' : 'app-text-muted'
-              }`}
-            >
-              Separate Backup Password
-            </button>
-            <button
-              type="button"
-              onClick={() => setBackupPasswordMode('master')}
-              className={`py-2 text-xs font-medium rounded-md ${
-                backupPasswordMode === 'master' ? 'bg-emerald-600 text-white' : 'app-text-muted'
-              }`}
-            >
-              Use Master Password
-            </button>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5">
-              {backupPasswordMode === 'separate'
-                ? 'Dedicated Backup Password (min 8 chars)'
-                : 'Enter Master Password to encrypt'}
-            </label>
-            <input
-              type="password"
-              value={backupPassword}
-              onChange={(e) => setBackupPassword(e.target.value)}
-              placeholder="Minimum 8 characters..."
-              autoComplete="new-password"
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              minLength={8}
-              required
-            />
-          </div>
-
+        <div className="rounded-xl border app-surface p-5">
           <button
-            type="submit"
-            disabled={exporting}
-            className="w-full rounded-lg py-2.5 text-xs font-semibold text-white min-h-[42px]"
-            style={{backgroundColor: 'var(--accent-primary)'}}
+            type="button"
+            onClick={() => setShowManualBackup((v) => !v)}
+            aria-expanded={showManualBackup}
+            className="w-full flex items-center justify-between gap-3 text-left"
           >
-            {exporting ? 'Encrypting Backup...' : 'Download Encrypted Backup (.mfa)'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Download className="w-4 h-4 text-emerald-500 shrink-0" />
+                <h2 className="text-base font-semibold">Manual Encrypted Backup</h2>
+              </div>
+              <p className="text-xs app-text-muted mt-0.5">
+                Export an AES-256-GCM encrypted <span className="font-mono-tabular">.mfa</span> archive.
+              </p>
+            </div>
+            <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+              {showManualBackup ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </span>
           </button>
-        </form>
+
+          {showManualBackup && (
+            <form onSubmit={handleManualExport} className="mt-4 pt-4 border-t app-border space-y-4">
+              <p className="text-xs app-text-muted">
+                Creates an AES-256-GCM encrypted <span className="font-mono-tabular">.mfa</span> archive. You can protect backups with a separate password.
+              </p>
+
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                <button
+                  type="button"
+                  onClick={() => setBackupPasswordMode('separate')}
+                  className={`py-2 text-xs font-medium rounded-md ${
+                    backupPasswordMode === 'separate' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  Separate Backup Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBackupPasswordMode('master')}
+                  className={`py-2 text-xs font-medium rounded-md ${
+                    backupPasswordMode === 'master' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  Use Master Password
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1.5">
+                  {backupPasswordMode === 'separate'
+                    ? 'Dedicated Backup Password (min 8 chars)'
+                    : 'Enter Master Password to encrypt'}
+                </label>
+                <input
+                  type="password"
+                  value={backupPassword}
+                  onChange={(e) => setBackupPassword(e.target.value)}
+                  placeholder="Minimum 8 characters..."
+                  autoComplete="new-password"
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                  minLength={8}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={exporting}
+                className="w-full rounded-lg py-2.5 text-xs font-semibold text-white min-h-[42px]"
+                style={{backgroundColor: 'var(--accent-primary)'}}
+              >
+                {exporting ? 'Encrypting Backup...' : 'Download Encrypted Backup (.mfa)'}
+              </button>
+            </form>
+          )}
+        </div>
 
         {/* Restore / Import from Backup */}
-        <form onSubmit={handleRestoreSubmit} className="rounded-xl border app-surface p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Upload className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-base font-semibold">Import / Restore Encrypted Backup</h2>
-          </div>
-          <p className="text-xs app-text-muted">
-            Supports MyFirst Account <span className="font-mono-tabular">.mfa</span> and MyPET Super{' '}
-            <span className="font-mono-tabular">.MyPET</span> AES-256-GCM encrypted backup files.
-          </p>
-
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
-            <button
-              type="button"
-              onClick={() => setRestoreMode('merge')}
-              className={`py-2 text-xs font-medium rounded-md ${
-                restoreMode === 'merge' ? 'bg-emerald-600 text-white' : 'app-text-muted'
-              }`}
-            >
-              Merge &amp; Import (Keep Existing)
-            </button>
-            <button
-              type="button"
-              onClick={() => setRestoreMode('replace')}
-              className={`py-2 text-xs font-medium rounded-md ${
-                restoreMode === 'replace' ? 'bg-rose-600 text-white' : 'app-text-muted'
-              }`}
-            >
-              Full Restore (Replace All)
-            </button>
-          </div>
-
-          <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed app-border p-4 cursor-pointer text-xs app-text-secondary hover:border-emerald-500">
-            <Upload className="w-4 h-4" />
-            <span>{restoreFileName || 'Choose .mfa or .MyPET backup file...'}</span>
-            <input
-              type="file"
-              accept=".mfa,.mypet,.MyPET,.json"
-              onChange={handleRestoreSelect}
-              className="hidden"
-            />
-          </label>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5">Backup Decryption Password</label>
-            <input
-              type="password"
-              value={restorePassword}
-              onChange={(e) => setRestorePassword(e.target.value)}
-              placeholder="Password used when creating the backup..."
-              autoComplete="off"
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              required
-            />
-          </div>
-
+        <div className="rounded-xl border app-surface p-5">
           <button
-            type="submit"
-            disabled={restoring}
-            className="w-full rounded-lg border app-border py-2.5 text-xs font-semibold hover:opacity-85 min-h-[42px]"
+            type="button"
+            onClick={() => setShowRestoreBackup((v) => !v)}
+            aria-expanded={showRestoreBackup}
+            className="w-full flex items-center justify-between gap-3 text-left"
           >
-            {restoring
-              ? 'Decrypting & Processing...'
-              : restoreMode === 'merge'
-                ? 'Decrypt & Merge Backup (Skip Duplicates)'
-                : 'Decrypt & Replace Entire Vault'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Upload className="w-4 h-4 text-emerald-500 shrink-0" />
+                <h2 className="text-base font-semibold">Import / Restore Encrypted Backup</h2>
+              </div>
+              <p className="text-xs app-text-muted mt-0.5">
+                Merge or restore <span className="font-mono-tabular">.mfa</span> and{' '}
+                <span className="font-mono-tabular">.MyPET</span> encrypted files.
+              </p>
+            </div>
+            <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+              {showRestoreBackup ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </span>
           </button>
-        </form>
+
+          {showRestoreBackup && (
+            <form onSubmit={handleRestoreSubmit} className="mt-4 pt-4 border-t app-border space-y-4">
+              <p className="text-xs app-text-muted">
+                Supports MyFirst Account <span className="font-mono-tabular">.mfa</span> and MyPET Super{' '}
+                <span className="font-mono-tabular">.MyPET</span> AES-256-GCM encrypted backup files.
+              </p>
+
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                <button
+                  type="button"
+                  onClick={() => setRestoreMode('merge')}
+                  className={`py-2 text-xs font-medium rounded-md ${
+                    restoreMode === 'merge' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  Merge &amp; Import (Keep Existing)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRestoreMode('replace')}
+                  className={`py-2 text-xs font-medium rounded-md ${
+                    restoreMode === 'replace' ? 'bg-rose-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  Full Restore (Replace All)
+                </button>
+              </div>
+
+              <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed app-border p-4 cursor-pointer text-xs app-text-secondary hover:border-emerald-500">
+                <Upload className="w-4 h-4" />
+                <span>{restoreFileName || 'Choose .mfa or .MyPET backup file...'}</span>
+                <input
+                  type="file"
+                  accept=".mfa,.mypet,.MyPET,.json"
+                  onChange={handleRestoreSelect}
+                  className="hidden"
+                />
+              </label>
+
+              <div>
+                <label className="block text-xs font-medium mb-1.5">Backup Decryption Password</label>
+                <input
+                  type="password"
+                  value={restorePassword}
+                  onChange={(e) => setRestorePassword(e.target.value)}
+                  placeholder="Password used when creating the backup..."
+                  autoComplete="off"
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={restoring}
+                className="w-full rounded-lg border app-border py-2.5 text-xs font-semibold hover:opacity-85 min-h-[42px]"
+              >
+                {restoring
+                  ? 'Decrypting & Processing...'
+                  : restoreMode === 'merge'
+                    ? 'Decrypt & Merge Backup (Skip Duplicates)'
+                    : 'Decrypt & Replace Entire Vault'}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Automatic Monthly Backup Snapshots */}

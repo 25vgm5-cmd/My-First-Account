@@ -215,20 +215,22 @@ const AppShell: React.FC = () => {
         </div>
       </aside>
 
-      {/* Mobile Compact Top Header (<= 52px) */}
-      <header className="no-print lg:hidden sticky top-0 z-30 h-13 border-b app-border app-surface px-4 flex items-center justify-between gap-3">
-        <BrandTitle size="mobile" />
-        <div className="flex items-center gap-1.5 shrink-0">
-          <PWAInstallButton compact />
-          <button
-            type="button"
-            onClick={lockVault}
-            title="Lock encrypted vault immediately"
-            className="p-2 rounded-lg border app-border app-text-secondary active:scale-95 transition-transform min-w-[40px] min-h-[40px] flex items-center justify-center"
-            aria-label="Lock vault"
-          >
-            <Lock className="w-4 h-4" />
-          </button>
+      {/* Mobile Compact Top Header (48px + top safe area inset) */}
+      <header className="no-print lg:hidden sticky top-0 z-30 border-b app-border app-surface app-mobile-header">
+        <div className="h-12 px-3.5 sm:px-4 flex items-center justify-between gap-2.5">
+          <BrandTitle size="mobile" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <PWAInstallButton compact />
+            <button
+              type="button"
+              onClick={lockVault}
+              title="Lock encrypted vault immediately"
+              className="p-1.5 rounded-lg border app-border app-text-secondary active:scale-95 transition-transform min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label="Lock vault"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 

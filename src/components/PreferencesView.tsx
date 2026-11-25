@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Check, CheckCircle2, Save} from 'lucide-react';
+import {Check, CheckCircle2, Minus, Plus, RefreshCw, Save} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
 import {APP_NAME, APP_VERSION} from '../types/finance';
@@ -10,7 +10,7 @@ import type {
   NumberFormat,
   ThemeMode,
 } from '../types/finance';
-import {CURRENCY_META} from '../utils/formatters';
+import {CURRENCY_META, formatMoney} from '../utils/formatters';
 import {CategoriesView} from './CategoriesView';
 import {PWAInstallButton} from './PWAComponents';
 
@@ -28,6 +28,11 @@ export const PreferencesView: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [showFormatting, setShowFormatting] = useState(false);
+  const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [updateCheckStatus, setUpdateCheckStatus] = useState('');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   useEffect(() => {
     setLanguage(settings.language);
@@ -96,6 +101,35 @@ export const PreferencesView: React.FC = () => {
     }
   };
 
+  const handleCheckForUpdate = async () => {
+    setCheckingUpdate(true);
+    setUpdateCheckStatus('');
+    try {
+      if (!('serviceWorker' in navigator)) {
+        setUpdateCheckStatus(`Running v${APP_VERSION}.`);
+        return;
+      }
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        setUpdateCheckStatus(`Running v${APP_VERSION}.`);
+        return;
+      }
+      await reg.update();
+      const nextWorker = reg.waiting || reg.installing;
+      if (nextWorker) {
+        setUpdateCheckStatus('New update detected — refreshing app...');
+        nextWorker.postMessage({type: 'SKIP_WAITING'});
+        window.setTimeout(() => window.location.reload(), 600);
+      } else {
+        setUpdateCheckStatus(`Up to date (v${APP_VERSION}) on this URL.`);
+      }
+    } catch {
+      setUpdateCheckStatus('Offline or unable to reach update server right now.');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="app-sticky-header -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 flex flex-wrap items-center justify-between gap-4 pb-4 border-b app-border">
@@ -111,12 +145,31 @@ export const PreferencesView: React.FC = () => {
       </div>
 
       <form onSubmit={handleSavePreferences} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border app-surface p-5 space-y-4">
-            <h2 className="text-base font-semibold">Display &amp; Regional Formatting</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+          {/* Left Column: Display & Regional Formatting + Opening Balance stacked */}
+          <div className="flex flex-col gap-5">
+            <div className="rounded-xl border app-surface p-5">
+              <button
+                type="button"
+                onClick={() => setShowFormatting((v) => !v)}
+                aria-expanded={showFormatting}
+                className="w-full flex items-center justify-between gap-3 text-left"
+              >
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold">Display &amp; Regional Formatting</h2>
+                  <p className="text-xs app-text-muted mt-0.5 font-mono-tabular truncate">
+                    {language.toUpperCase()} · {currency} · {dateFormat}
+                  </p>
+                </div>
+                <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+                  {showFormatting ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </span>
+              </button>
 
-            <div>
-              <label className="block text-xs font-medium mb-1.5">Language</label>
+              {showFormatting && (
+                <div className="mt-4 pt-4 border-t app-border space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Language</label>
               <select
                 value={language}
                 onChange={(e) => {
@@ -177,78 +230,105 @@ export const PreferencesView: React.FC = () => {
                 }}
                 className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
               >
-                <option value="indian">Indian Grouping (1,00,000.00)</option>
-                <option value="international">International (100,000.00)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {/* Theme Picker */}
-            <div className="rounded-xl border app-surface p-5 space-y-4">
-              <h2 className="text-base font-semibold">Theme Mode</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {(['dark', 'gray'] as ThemeMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => {
-                      setThemeMode(mode);
-                      void setTheme(mode);
-                    }}
-                    className={`flex items-center justify-between rounded-xl border p-4 text-left min-h-[52px] ${
-                      themeMode === mode
-                        ? 'border-emerald-500 bg-emerald-500/10'
-                        : 'app-border'
-                    }`}
-                  >
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {mode === 'dark' ? 'Dark Mode' : 'Gray Mode'}
-                      </div>
-                      <div className="text-xs app-text-muted">
-                        {mode === 'dark' ? 'Deep Obsidian' : 'Soft Ash Gray'}
-                      </div>
-                    </div>
-                    {themeMode === mode && <Check className="w-4 h-4 text-emerald-500" />}
-                  </button>
-                ))}
-              </div>
+                  <option value="indian">Indian Grouping (1,00,000.00)</option>
+                  <option value="international">International (100,000.00)</option>
+                </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Opening Balance Editor */}
-            <div className="rounded-xl border app-surface p-5 space-y-4">
-              <h2 className="text-base font-semibold">{t(settings.language, 'openingBalance')}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">
-                    Amount ({CURRENCY_META[currency].symbol})
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={openingBalance}
-                    onChange={(e) => {
-                      setOpeningBalance(e.target.value);
-                      setSavedMsg('');
-                    }}
-                    className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
-                  />
+            <div className="rounded-xl border app-surface p-5">
+              <button
+                type="button"
+                onClick={() => setShowOpeningBalance((v) => !v)}
+                aria-expanded={showOpeningBalance}
+                className="w-full flex items-center justify-between gap-3 text-left"
+              >
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold">{t(settings.language, 'openingBalance')}</h2>
+                  <p className="text-xs app-text-muted mt-0.5 font-mono-tabular truncate">
+                    {formatMoney(
+                      Number.isFinite(parsedBalance) ? parsedBalance : 0,
+                      currency,
+                      numberFormat
+                    )}{' '}
+                    · {openingBalanceDate}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">As of Date</label>
-                  <input
-                    type="date"
-                    value={openingBalanceDate}
-                    onChange={(e) => {
-                      setOpeningBalanceDate(e.target.value);
-                      setSavedMsg('');
-                    }}
-                    className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
-                  />
+                <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+                  {showOpeningBalance ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </span>
+              </button>
+
+              {showOpeningBalance && (
+                <div className="mt-4 pt-4 border-t app-border grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">
+                      Amount ({CURRENCY_META[currency].symbol})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={openingBalance}
+                      onChange={(e) => {
+                        setOpeningBalance(e.target.value);
+                        setSavedMsg('');
+                      }}
+                      className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">As of Date</label>
+                    <input
+                      type="date"
+                      value={openingBalanceDate}
+                      onChange={(e) => {
+                        setOpeningBalanceDate(e.target.value);
+                        setSavedMsg('');
+                      }}
+                      className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Theme Mode matching combined height of Left Column */}
+          <div className="rounded-xl border app-surface p-5 flex flex-col gap-4 h-full">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold">Theme Mode</h2>
+              <span className="text-xs app-text-muted">Instant Switch</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 flex-1 lg:max-h-[120px]">
+              {(['dark', 'gray'] as ThemeMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    setThemeMode(mode);
+                    void setTheme(mode);
+                  }}
+                  className={`flex items-center justify-between rounded-xl border p-4 text-left h-full min-h-[82px] ${
+                    themeMode === mode
+                      ? 'border-emerald-500 bg-emerald-500/10'
+                      : 'app-border'
+                  }`}
+                >
+                  <div>
+                    <div className="text-sm font-semibold">
+                      {mode === 'dark' ? 'Dark Mode' : 'Gray Mode'}
+                    </div>
+                    <div className="text-xs app-text-muted mt-0.5">
+                      {mode === 'dark' ? 'Deep Obsidian' : 'Soft Ash Gray'}
+                    </div>
+                  </div>
+                  {themeMode === mode && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -285,14 +365,30 @@ export const PreferencesView: React.FC = () => {
 
       {/* Application Information */}
       <div className="rounded-xl border app-surface p-5 space-y-2">
-        <h2 className="text-base font-semibold">Application Information</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Application Information</h2>
+          <button
+            type="button"
+            disabled={checkingUpdate}
+            onClick={() => void handleCheckForUpdate()}
+            className="inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-1.5 text-xs font-medium app-text-secondary hover:border-emerald-500/50 min-h-[34px] disabled:opacity-60"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${checkingUpdate ? 'animate-spin' : ''}`} />
+            <span>{checkingUpdate ? 'Checking...' : 'Check for Update'}</span>
+          </button>
+        </div>
         <div className="text-xs sm:text-sm app-text-muted space-y-1 leading-relaxed">
-          <div className="flex flex-col">
-            <span className="font-display text-base font-extrabold tracking-tight app-brand-title w-fit">
+          <div className="inline-flex flex-col w-fit max-w-full">
+            <span className="font-display text-base font-extrabold tracking-tight app-brand-title whitespace-nowrap">
               {APP_NAME} v{APP_VERSION}
             </span>
-            <span className="text-[11px] font-medium app-text-muted">by AiStudio.Gm5</span>
+            <span className="self-end text-right text-[11px] font-medium app-text-secondary opacity-85 whitespace-nowrap">
+              by AiStudio.Gm5
+            </span>
           </div>
+          {updateCheckStatus && (
+            <div className="text-xs text-emerald-400 font-medium pt-0.5">{updateCheckStatus}</div>
+          )}
           <div>
             Currency: {settings.currency === 'EUR' ? 'Euro (€)' : CURRENCY_META[settings.currency]?.label}
           </div>

@@ -1,5 +1,5 @@
 export const APP_NAME = 'MyFirst Account';
-export const APP_VERSION = '1.23';
+export const APP_VERSION = '1.26';
 
 export type Language = 'en' | 'ta' | 'tanglish';
 

@@ -620,7 +620,7 @@ export const PdfImportView: React.FC = () => {
         <div
           className={`${
             hasRows
-              ? 'sticky top-13 z-20 app-canvas -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 md:static md:mt-0 md:pt-0 md:mx-0 md:px-0 '
+              ? 'app-mobile-sticky-header -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mt-0 md:pt-0 md:mx-0 md:px-0 '
               : ''
           }flex flex-wrap items-center justify-between gap-4 pb-3 border-b app-border`}
         >

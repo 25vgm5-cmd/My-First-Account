@@ -6,6 +6,8 @@ import {
   EyeOff,
   KeyRound,
   Lock,
+  Minus,
+  Plus,
   ShieldCheck,
   Trash2,
 } from 'lucide-react';
@@ -47,6 +49,13 @@ export const SecurityView: React.FC = () => {
   // Secure Reset state
   const [resetPhrase, setResetPhrase] = useState('');
   const [resetPassword, setResetPassword] = useState('');
+
+  // Collapsible box states (all collapsed by default except Database Schema Versioning & Crypto Profile)
+  const [showQuickPin, setShowQuickPin] = useState(false);
+  const [showAutoLock, setShowAutoLock] = useState(false);
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [showSecureReset, setShowSecureReset] = useState(false);
+  const [showFullWipe, setShowFullWipe] = useState(false);
 
   // Password confirmation modal state for Auto-Lock & Protection / Transaction Wipe
   const [pendingProtectedAction, setPendingProtectedAction] = useState<{
@@ -159,17 +168,22 @@ export const SecurityView: React.FC = () => {
       )}
 
       {/* Quick PIN & Auto-Lock Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Quick PIN Unlock Card */}
-        <div className="rounded-xl border app-surface p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-emerald-500" />
-              <h2 className="text-base font-semibold">Quick PIN Unlock</h2>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs font-medium ${
+        <div className="rounded-xl border app-surface p-5">
+          <button
+            type="button"
+            onClick={() => setShowQuickPin((v) => !v)}
+            aria-expanded={showQuickPin}
+            className="w-full flex items-center justify-between gap-3 text-left"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-emerald-500 shrink-0" />
+                <h2 className="text-base font-semibold">Quick PIN Unlock</h2>
+              </div>
+              <div
+                className={`text-xs font-medium mt-0.5 ${
                   pinLockedOut
                     ? 'text-amber-400'
                     : vaultMeta?.pinEnabled
@@ -182,214 +196,264 @@ export const SecurityView: React.FC = () => {
                   : vaultMeta?.pinEnabled
                     ? 'Active (4–6 Digit PIN)'
                     : 'Not Configured'}
-              </span>
-              {vaultMeta?.pinEnabled && (
-                <button
-                  type="button"
-                  disabled={pinBusy}
-                  onClick={() => void handleDisablePin()}
-                  className="text-xs text-rose-400 hover:underline font-medium"
-                >
-                  Disable PIN
-                </button>
+              </div>
+            </div>
+            <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+              {showQuickPin ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </span>
+          </button>
+
+          {showQuickPin && (
+            <div className="mt-4 pt-4 border-t app-border space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-xs app-text-muted flex-1">
+                  Set a 4 to 6 digit numeric PIN for quick unlocking on this device. Your DEK is separately wrapped with your PIN using PBKDF2-HMAC-SHA-256.
+                </p>
+                {vaultMeta?.pinEnabled && (
+                  <button
+                    type="button"
+                    disabled={pinBusy}
+                    onClick={() => void handleDisablePin()}
+                    className="text-xs text-rose-400 hover:underline font-medium shrink-0"
+                  >
+                    Disable PIN
+                  </button>
+                )}
+              </div>
+
+              {pinNotice && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-400">
+                  {pinNotice}
+                </div>
               )}
-            </div>
-          </div>
+              {pinError && (
+                <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-400">
+                  {pinError}
+                </div>
+              )}
 
-          <p className="text-xs app-text-muted">
-            Set a 4 to 6 digit numeric PIN for quick unlocking on this device. Your DEK is separately wrapped with your PIN using PBKDF2-HMAC-SHA-256.
-          </p>
+              <form onSubmit={handleEnablePin} className="space-y-3" autoComplete="off">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Verify Master Password</label>
+                  <input
+                    type="password"
+                    name="verify_master_password_for_pin"
+                    autoComplete="off"
+                    value={pinPw}
+                    onChange={(e) => setPinPw(e.target.value)}
+                    placeholder="Enter Master Password..."
+                    className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                    required
+                  />
+                </div>
 
-          {pinNotice && (
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-400">
-              {pinNotice}
+                <div>
+                  <label className="block text-xs font-medium mb-1">Quick PIN (4–6 Digits)</label>
+                  <div className="relative">
+                    <input
+                      type={showPinDigits ? 'text' : 'password'}
+                      name="quick_pin_digits"
+                      autoComplete="off"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={pinCode}
+                      onChange={(e) => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="Enter 4-6 digit PIN (e.g. 1234)"
+                      className="w-full rounded-lg border app-input px-3 py-2 pr-10 text-sm font-mono-tabular tracking-widest min-h-[42px]"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPinDigits((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 app-text-muted"
+                      aria-label="Toggle PIN visibility"
+                    >
+                      {showPinDigits ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={pinBusy}
+                  className="w-full rounded-lg py-2.5 text-xs font-semibold text-white min-h-[42px] disabled:opacity-60"
+                  style={{backgroundColor: 'var(--accent-primary)'}}
+                >
+                  {pinBusy
+                    ? 'Wrapping Key with PIN...'
+                    : vaultMeta?.pinEnabled
+                      ? 'Update Quick PIN'
+                      : 'Enable Quick PIN'}
+                </button>
+              </form>
             </div>
           )}
-          {pinError && (
-            <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-400">
-              {pinError}
-            </div>
-          )}
+        </div>
 
-          <form onSubmit={handleEnablePin} className="space-y-3" autoComplete="off">
-            <div>
-              <label className="block text-xs font-medium mb-1">Verify Master Password</label>
-              <input
-                type="password"
-                name="verify_master_password_for_pin"
-                autoComplete="off"
-                value={pinPw}
-                onChange={(e) => setPinPw(e.target.value)}
-                placeholder="Enter Master Password..."
-                className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-                required
-              />
+        {/* Auto-Lock & Protection */}
+        <div className="rounded-xl border app-surface p-5">
+          <button
+            type="button"
+            onClick={() => setShowAutoLock((v) => !v)}
+            aria-expanded={showAutoLock}
+            className="w-full flex items-center justify-between gap-3 text-left"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
+                <h2 className="text-base font-semibold">Auto-Lock &amp; Protection</h2>
+              </div>
+              <div className="text-xs app-text-muted mt-0.5 font-mono-tabular">
+                {settings.autoLockMinutes === 0
+                  ? 'Manual Lock Only'
+                  : `${settings.autoLockMinutes} min timeout`}{' '}
+                · Protection {settings.confirmOnSensitiveActions ? 'ON' : 'OFF'}
+              </div>
             </div>
+            <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+              {showAutoLock ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </span>
+          </button>
 
-            <div>
-              <label className="block text-xs font-medium mb-1">Quick PIN (4–6 Digits)</label>
-              <div className="relative">
+          {showAutoLock && (
+            <div className="mt-4 pt-4 border-t app-border space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-1.5">Auto-Lock Timeout</label>
+                <select
+                  value={settings.autoLockMinutes}
+                  onChange={(e) => {
+                    const nextMinutes = Number(e.target.value);
+                    if (nextMinutes === settings.autoLockMinutes) return;
+                    clearFeedback();
+                    setPendingProtectedAction({
+                      title: 'Verify Master Password',
+                      description: `Enter your Master Password to change Auto-Lock Timeout to ${
+                        nextMinutes === 0
+                          ? 'Disabled (Manual Lock Only)'
+                          : `${nextMinutes} minute${nextMinutes === 1 ? '' : 's'}`
+                      }.`,
+                      confirmLabel: 'Verify & Save Timeout',
+                      danger: false,
+                      run: async () => {
+                        await updateSettings({autoLockMinutes: nextMinutes});
+                        setNotice('Auto-Lock Timeout updated.');
+                      },
+                    });
+                  }}
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                >
+                  <option value={1}>1 minute of inactivity</option>
+                  <option value={5}>5 minutes of inactivity</option>
+                  <option value={15}>15 minutes of inactivity</option>
+                  <option value={30}>30 minutes of inactivity</option>
+                  <option value={0}>Disabled (Manual Lock Only)</option>
+                </select>
+              </div>
+
+              <label className="flex items-start gap-2.5 text-xs cursor-pointer pt-1">
                 <input
-                  type={showPinDigits ? 'text' : 'password'}
-                  name="quick_pin_digits"
-                  autoComplete="off"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={pinCode}
-                  onChange={(e) => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 4-6 digit PIN (e.g. 1234)"
-                  className="w-full rounded-lg border app-input px-3 py-2 pr-10 text-sm font-mono-tabular tracking-widest min-h-[42px]"
+                  type="checkbox"
+                  checked={settings.confirmOnSensitiveActions}
+                  onChange={(e) => {
+                    const nextEnabled = e.target.checked;
+                    clearFeedback();
+                    setPendingProtectedAction({
+                      title: 'Verify Master Password',
+                      description: nextEnabled
+                        ? 'Enter your Master Password to turn ON protection and display the Edit/Delete Actions column.'
+                        : 'Enter your Master Password to turn OFF protection and hide the Edit/Delete Actions column.',
+                      confirmLabel: nextEnabled ? 'Verify & Enable' : 'Verify & Disable',
+                      danger: false,
+                      run: async () => {
+                        await updateSettings({confirmOnSensitiveActions: nextEnabled});
+                        setNotice(
+                          nextEnabled
+                            ? 'Protection enabled: Edit & Delete Actions column is now visible and Master Password protected.'
+                            : 'Protection turned off: Edit & Delete Actions column is now hidden.'
+                        );
+                      },
+                    });
+                  }}
+                  className="w-4 h-4 mt-0.5 accent-emerald-600"
+                />
+                <span className="app-text-secondary">
+                  Require Master Password re-entry when editing or deleting transactions
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Change Master Password */}
+      <div className="rounded-xl border app-surface p-5">
+        <button
+          type="button"
+          onClick={() => setShowChangePw((v) => !v)}
+          aria-expanded={showChangePw}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <h2 className="text-base font-semibold">Change Master Password</h2>
+            </div>
+            <p className="text-xs app-text-muted mt-0.5">
+              Re-wrap your 256-bit DEK with a fresh salt and updated Master Password.
+            </p>
+          </div>
+          <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+            {showChangePw ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </span>
+        </button>
+
+        {showChangePw && (
+          <form onSubmit={handleChangePassword} className="mt-4 pt-4 border-t app-border space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium mb-1">Current Master Password</label>
+                <input
+                  type="password"
+                  value={oldPw}
+                  onChange={(e) => setOldPw(e.target.value)}
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPinDigits((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 app-text-muted"
-                  aria-label="Toggle PIN visibility"
-                >
-                  {showPinDigits ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">New Master Password (min 8 chars)</label>
+                <input
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                  minLength={8}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Confirm New Master Password</label>
+                <input
+                  type="password"
+                  value={confirmNewPw}
+                  onChange={(e) => setConfirmNewPw(e.target.value)}
+                  className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                  minLength={8}
+                  required
+                />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={pinBusy}
-              className="w-full rounded-lg py-2.5 text-xs font-semibold text-white min-h-[42px] disabled:opacity-60"
+              className="rounded-lg px-5 py-2.5 text-xs font-semibold text-white min-h-[42px]"
               style={{backgroundColor: 'var(--accent-primary)'}}
             >
-              {pinBusy
-                ? 'Wrapping Key with PIN...'
-                : vaultMeta?.pinEnabled
-                  ? 'Update Quick PIN'
-                  : 'Enable Quick PIN'}
+              Update Master Password
             </button>
           </form>
-        </div>
-
-        {/* Auto-Lock & Protection */}
-        <div className="rounded-xl border app-surface p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-base font-semibold">Auto-Lock &amp; Protection</h2>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5">Auto-Lock Timeout</label>
-            <select
-              value={settings.autoLockMinutes}
-              onChange={(e) => {
-                const nextMinutes = Number(e.target.value);
-                if (nextMinutes === settings.autoLockMinutes) return;
-                clearFeedback();
-                setPendingProtectedAction({
-                  title: 'Verify Master Password',
-                  description: `Enter your Master Password to change Auto-Lock Timeout to ${
-                    nextMinutes === 0
-                      ? 'Disabled (Manual Lock Only)'
-                      : `${nextMinutes} minute${nextMinutes === 1 ? '' : 's'}`
-                  }.`,
-                  confirmLabel: 'Verify & Save Timeout',
-                  danger: false,
-                  run: async () => {
-                    await updateSettings({autoLockMinutes: nextMinutes});
-                    setNotice('Auto-Lock Timeout updated.');
-                  },
-                });
-              }}
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-            >
-              <option value={1}>1 minute of inactivity</option>
-              <option value={5}>5 minutes of inactivity</option>
-              <option value={15}>15 minutes of inactivity</option>
-              <option value={30}>30 minutes of inactivity</option>
-              <option value={0}>Disabled (Manual Lock Only)</option>
-            </select>
-          </div>
-
-          <label className="flex items-start gap-2.5 text-xs cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={settings.confirmOnSensitiveActions}
-              onChange={(e) => {
-                const nextEnabled = e.target.checked;
-                clearFeedback();
-                setPendingProtectedAction({
-                  title: 'Verify Master Password',
-                  description: nextEnabled
-                    ? 'Enter your Master Password to turn ON protection and display the Edit/Delete Actions column.'
-                    : 'Enter your Master Password to turn OFF protection and hide the Edit/Delete Actions column.',
-                  confirmLabel: nextEnabled ? 'Verify & Enable' : 'Verify & Disable',
-                  danger: false,
-                  run: async () => {
-                    await updateSettings({confirmOnSensitiveActions: nextEnabled});
-                    setNotice(
-                      nextEnabled
-                        ? 'Protection enabled: Edit & Delete Actions column is now visible and Master Password protected.'
-                        : 'Protection turned off: Edit & Delete Actions column is now hidden.'
-                    );
-                  },
-                });
-              }}
-              className="w-4 h-4 mt-0.5 accent-emerald-600"
-            />
-            <span className="app-text-secondary">
-              Require Master Password re-entry when editing or deleting transactions
-            </span>
-          </label>
-        </div>
+        )}
       </div>
-
-      {/* Change Master Password */}
-      <form onSubmit={handleChangePassword} className="rounded-xl border app-surface p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <h2 className="text-base font-semibold">Change Master Password</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-medium mb-1">Current Master Password</label>
-            <input
-              type="password"
-              value={oldPw}
-              onChange={(e) => setOldPw(e.target.value)}
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">New Master Password (min 8 chars)</label>
-            <input
-              type="password"
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              minLength={8}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Confirm New Master Password</label>
-            <input
-              type="password"
-              value={confirmNewPw}
-              onChange={(e) => setConfirmNewPw(e.target.value)}
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              minLength={8}
-              required
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="rounded-lg px-5 py-2.5 text-xs font-semibold text-white min-h-[42px]"
-          style={{backgroundColor: 'var(--accent-primary)'}}
-        >
-          Update Master Password
-        </button>
-      </form>
 
       {/* Schema Versioning & Crypto Specs */}
       <div className="rounded-xl border app-surface p-5 space-y-4">
@@ -441,78 +505,120 @@ export const SecurityView: React.FC = () => {
       </div>
 
       {/* Secure Data Reset */}
-      <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-5 space-y-5">
-        <div className="flex items-center gap-2 text-rose-400">
-          <AlertOctagon className="w-4 h-4" />
-          <h2 className="text-base font-semibold">Secure Data Reset</h2>
-        </div>
-
-        {/* Option 1: Delete All Encrypted Transactions Only */}
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1 max-w-xl">
-            <div className="text-sm font-semibold text-amber-400">
-              Delete All Encrypted Transactions Only ({transactions.length})
+      <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-5">
+        <button
+          type="button"
+          onClick={() => setShowSecureReset((v) => !v)}
+          aria-expanded={showSecureReset}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-rose-400">
+              <AlertOctagon className="w-4 h-4 shrink-0" />
+              <h2 className="text-base font-semibold">Secure Data Reset</h2>
             </div>
-            <p className="text-xs app-text-secondary">
-              Permanently deletes all encrypted transactions and Trash entries from this device while keeping your Categories, Settings, Master Password, Quick PIN, and Monthly Backups intact.
+            <p className="text-xs app-text-muted mt-0.5">
+              Delete encrypted transactions or permanently wipe this device&apos;s local vault.
             </p>
           </div>
-          <button
-            type="button"
-            disabled={transactions.length === 0}
-            onClick={() => {
-              clearFeedback();
-              setPendingProtectedAction({
-                title: 'Delete All Encrypted Transactions',
-                description: `Enter your Master Password to permanently delete all ${transactions.length} encrypted transaction(s) and Trash entries. Your Categories, Settings, and Master Password will be kept.`,
-                confirmLabel: 'Verify & Delete All Transactions',
-                danger: true,
-                run: async (verifiedPw) => {
-                  await deleteAllTransactions(verifiedPw);
-                  setNotice('All encrypted transactions have been permanently deleted.');
-                },
-              });
-            }}
-            className="inline-flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-600/90 px-4 py-2.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-40 min-h-[40px] shrink-0"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Delete All Encrypted Transactions</span>
-          </button>
-        </div>
+          <span className="w-7 h-7 rounded-lg border border-rose-500/40 bg-rose-500/10 flex items-center justify-center shrink-0 text-rose-400">
+            {showSecureReset ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </span>
+        </button>
 
-        {/* Option 2: Full Vault Reset */}
-        <form onSubmit={handleSecureReset} className="pt-4 border-t border-rose-500/20 space-y-3">
-          <div className="text-sm font-semibold text-rose-400">Full Encrypted Vault Wipe</div>
-          <p className="text-xs app-text-secondary">
-            Permanently wipes all encrypted transactions, categories, backups, settings, and keys from IndexedDB and localStorage on this device. Export a backup before resetting.
-          </p>
+        {showSecureReset && (
+          <div className="mt-4 pt-4 border-t border-rose-500/20 space-y-5">
+            {/* Option 1: Delete All Encrypted Transactions Only */}
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1 max-w-xl">
+                <div className="text-sm font-semibold text-amber-400">
+                  Delete All Encrypted Transactions Only ({transactions.length})
+                </div>
+                <p className="text-xs app-text-secondary">
+                  Permanently deletes all encrypted transactions and Trash entries from this device while keeping your Categories, Settings, Master Password, Quick PIN, and Monthly Backups intact.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={transactions.length === 0}
+                onClick={() => {
+                  clearFeedback();
+                  setPendingProtectedAction({
+                    title: 'Delete All Encrypted Transactions',
+                    description: `Enter your Master Password to permanently delete all ${transactions.length} encrypted transaction(s) and Trash entries. Your Categories, Settings, and Master Password will be kept.`,
+                    confirmLabel: 'Verify & Delete All Transactions',
+                    danger: true,
+                    run: async (verifiedPw) => {
+                      await deleteAllTransactions(verifiedPw);
+                      setNotice('All encrypted transactions have been permanently deleted.');
+                    },
+                  });
+                }}
+                className="inline-flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-600/90 px-4 py-2.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-40 min-h-[40px] shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete All Encrypted Transactions</span>
+              </button>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              type="text"
-              value={resetPhrase}
-              onChange={(e) => setResetPhrase(e.target.value)}
-              placeholder='Type "RESET" to confirm'
-              className="rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              required
-            />
-            <input
-              type="password"
-              value={resetPassword}
-              onChange={(e) => setResetPassword(e.target.value)}
-              placeholder="Verify Master Password"
-              className="rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
-              required
-            />
+            {/* Option 2: Full Vault Reset */}
+            <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-4">
+              <button
+                type="button"
+                onClick={() => setShowFullWipe((v) => !v)}
+                aria-expanded={showFullWipe}
+                className="w-full flex items-center justify-between gap-3 text-left"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-rose-400">Full Encrypted Vault Wipe</div>
+                  <p className="text-xs app-text-muted mt-0.5">
+                    Permanently erase all local data, backups, settings, and keys.
+                  </p>
+                </div>
+                <span className="w-7 h-7 rounded-lg border border-rose-500/40 bg-rose-500/10 flex items-center justify-center shrink-0 text-rose-400">
+                  {showFullWipe ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </span>
+              </button>
+
+              {showFullWipe && (
+                <form
+                  onSubmit={handleSecureReset}
+                  className="mt-4 pt-4 border-t border-rose-500/20 space-y-3"
+                >
+                  <p className="text-xs app-text-secondary">
+                    Permanently wipes all encrypted transactions, categories, backups, settings, and keys from IndexedDB and localStorage on this device. Export a backup before resetting.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={resetPhrase}
+                      onChange={(e) => setResetPhrase(e.target.value)}
+                      placeholder='Type "RESET" to confirm'
+                      className="rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                      required
+                    />
+                    <input
+                      type="password"
+                      value={resetPassword}
+                      onChange={(e) => setResetPassword(e.target.value)}
+                      placeholder="Verify Master Password"
+                      className="rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 min-h-[40px]"
+                  >
+                    Wipe All Encrypted Vault Data
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
-
-          <button
-            type="submit"
-            className="rounded-lg bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 min-h-[40px]"
-          >
-            Wipe All Encrypted Vault Data
-          </button>
-        </form>
+        )}
       </div>
 
       {/* Master Password Confirmation Modal */}

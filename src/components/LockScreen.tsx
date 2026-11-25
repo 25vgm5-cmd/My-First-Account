@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Eye, EyeOff, KeyRound, Lock, Moon, Sun, Upload} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
+import {BrandTitle} from './BrandTitle';
 
 export const LockScreen: React.FC = () => {
   const {
@@ -101,8 +102,8 @@ export const LockScreen: React.FC = () => {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">MyFirst Account</h1>
-              <p className="text-xs app-text-muted">{t(settings.language, 'offlineReady')}</p>
+              <BrandTitle size="desktop" />
+              <p className="text-[11px] app-text-muted mt-1">{t(settings.language, 'offlineReady')}</p>
             </div>
           </div>
 

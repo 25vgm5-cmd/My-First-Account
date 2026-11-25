@@ -281,14 +281,18 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
     }
 
     const timeoutMs = settings.autoLockMinutes * 60 * 1000;
+    let lastReset = 0;
     const resetTimer = () => {
+      const now = Date.now();
+      if (now - lastReset < 1000 && idleTimerRef.current !== null) return;
+      lastReset = now;
       if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
       idleTimerRef.current = window.setTimeout(() => {
         lockVault();
       }, timeoutMs);
     };
 
-    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'touchmove', 'wheel', 'scroll'];
     events.forEach((ev) => window.addEventListener(ev, resetTimer, {passive: true}));
     resetTimer();
 

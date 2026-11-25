@@ -22,6 +22,8 @@
   --income-text: #34D399;
   --expense-text: #FB7185;
   --warning-text: #FBBF24;
+  --brand-blue: #38BDF8;
+  --brand-gradient: linear-gradient(135deg, #60A5FA 0%, #38BDF8 100%);
 }
 
 html.theme-gray {
@@ -41,6 +43,8 @@ html.theme-gray {
   --income-text: #047857;
   --expense-text: #BE123C;
   --warning-text: #B45309;
+  --brand-blue: #1D4ED8;
+  --brand-gradient: linear-gradient(135deg, #1D4ED8 0%, #0284C7 100%);
 }
 
 html.theme-dark {
@@ -59,6 +63,8 @@ html.theme-dark {
   --income-text: #34D399;
   --expense-text: #FB7185;
   --warning-text: #FBBF24;
+  --brand-blue: #38BDF8;
+  --brand-gradient: linear-gradient(135deg, #60A5FA 0%, #38BDF8 100%);
 }
 
 @layer base {
@@ -68,6 +74,11 @@ html.theme-dark {
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: contain;
+  }
+
+  body {
+    overscroll-behavior-y: contain;
   }
 
   html.theme-dark body {
@@ -126,6 +137,14 @@ html.theme-dark {
 
 .app-text-secondary {
   color: var(--text-secondary);
+}
+
+.app-brand-title {
+  color: var(--brand-blue);
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Subtle micro-animations for navigation, page transitions, modals & interactive cards */

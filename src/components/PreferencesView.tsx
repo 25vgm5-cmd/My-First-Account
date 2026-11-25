@@ -287,8 +287,11 @@ export const PreferencesView: React.FC = () => {
       <div className="rounded-xl border app-surface p-5 space-y-2">
         <h2 className="text-base font-semibold">Application Information</h2>
         <div className="text-xs sm:text-sm app-text-muted space-y-1 leading-relaxed">
-          <div className="font-semibold app-text-secondary">
-            {APP_NAME} v{APP_VERSION}
+          <div className="flex flex-col">
+            <span className="font-display text-base font-extrabold tracking-tight app-brand-title w-fit">
+              {APP_NAME} v{APP_VERSION}
+            </span>
+            <span className="text-[11px] font-medium app-text-muted">by AiStudio.Gm5</span>
           </div>
           <div>
             Currency: {settings.currency === 'EUR' ? 'Euro (€)' : CURRENCY_META[settings.currency]?.label}

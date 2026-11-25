@@ -16,6 +16,7 @@ import {
 import {AnnualReportsView} from './components/AnnualReportsView';
 import {AddTransactionView} from './components/AddTransactionView';
 import {BackupView} from './components/BackupView';
+import {BrandTitle} from './components/BrandTitle';
 import {DashboardView} from './components/DashboardView';
 import {LockScreen} from './components/LockScreen';
 import {MonthlyReportsView} from './components/MonthlyReportsView';
@@ -163,10 +164,8 @@ const AppShell: React.FC = () => {
     <div className="min-h-screen app-canvas flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <aside className="no-print hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 border-r app-border app-surface min-h-screen sticky top-0 h-screen">
-        <div className="px-5 py-5 border-b app-border flex items-center justify-between gap-2">
-          <span className="text-base font-bold tracking-tight whitespace-nowrap">
-            MyFirst Account
-          </span>
+        <div className="px-5 py-4 border-b app-border flex items-center justify-between gap-2">
+          <BrandTitle size="desktop" />
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -218,9 +217,7 @@ const AppShell: React.FC = () => {
 
       {/* Mobile Compact Top Header (<= 52px) */}
       <header className="no-print lg:hidden sticky top-0 z-30 h-13 border-b app-border app-surface px-4 flex items-center justify-between gap-3">
-        <span className="text-sm font-bold tracking-tight whitespace-nowrap shrink-0">
-          MyFirst Account
-        </span>
+        <BrandTitle size="mobile" />
         <div className="flex items-center gap-1.5 shrink-0">
           <PWAInstallButton compact />
           <button

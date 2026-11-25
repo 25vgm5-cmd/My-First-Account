@@ -20,6 +20,7 @@ import type {
   ThemeMode,
 } from '../types/finance';
 import {CURRENCY_META, getTodayISO} from '../utils/formatters';
+import {BrandTitle} from './BrandTitle';
 
 export const OnboardingWizard: React.FC = () => {
   const {initializeNewVault, restoreFromBackupFile, setTheme} = useVault();
@@ -161,10 +162,8 @@ export const OnboardingWizard: React.FC = () => {
       <div className="w-full max-w-2xl rounded-2xl border app-surface p-6 sm:p-8 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b app-border">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-              MyFirst Account App
-            </h1>
-            <p className="mt-1 text-sm app-text-muted">
+            <BrandTitle size="hero" />
+            <p className="mt-1.5 text-sm app-text-muted">
               Step {step} of 3 · Offline AES-256-GCM Encrypted Personal Finance Vault
             </p>
           </div>

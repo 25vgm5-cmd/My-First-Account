@@ -128,7 +128,7 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
             </button>
           </form>
 
-          <div className="divide-y app-border border-t app-border">
+          <div className="divide-y app-border border-t app-border app-zoom-list">
         {list.map((cat) => {
           const isEditing = editingId === cat.id;
           const count = usageCountMap.get(cat.id) || 0;
@@ -163,11 +163,11 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({embedded = false}
               ) : (
                 <>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium flex items-center gap-2">
+                    <div className="font-medium flex items-center gap-2">
                       <span>{cat.name}</span>
                       {cat.isFixed && <Lock className="w-3.5 h-3.5 app-text-muted" />}
                     </div>
-                    <div className="text-xs app-text-muted font-mono-tabular mt-0.5">
+                    <div className="app-zoom-list-sm app-text-muted font-mono-tabular mt-0.5">
                       {count} transaction{count === 1 ? '' : 's'}
                       {cat.isFixed ? ' · Mandatory Fixed Category' : ''}
                     </div>

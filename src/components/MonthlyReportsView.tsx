@@ -151,7 +151,7 @@ export const MonthlyReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">Total Income</div>
           <div
-            className="mt-2 text-xl sm:text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{color: 'var(--income-text)'}}
           >
             {formatMoney(report.totalIncome, settings.currency, settings.numberFormat)}
@@ -161,7 +161,7 @@ export const MonthlyReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">Total Expenses</div>
           <div
-            className="mt-2 text-xl sm:text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{color: 'var(--expense-text)'}}
           >
             {formatMoney(report.totalExpenses, settings.currency, settings.numberFormat)}
@@ -171,7 +171,7 @@ export const MonthlyReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">{t(settings.language, 'netIncome')}</div>
           <div
-            className="mt-2 text-xl sm:text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{
               color: report.netIncome >= 0 ? 'var(--income-text)' : 'var(--expense-text)',
             }}
@@ -184,7 +184,7 @@ export const MonthlyReportsView: React.FC = () => {
 
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">{t(settings.language, 'savings')}</div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold font-mono-tabular">
+          <div className="mt-2 app-zoom-kpi font-bold font-mono-tabular">
             {formatMoney(report.savings, settings.currency, settings.numberFormat)}
           </div>
           <div className="mt-1 text-xs app-text-muted font-mono-tabular">
@@ -217,7 +217,7 @@ export const MonthlyReportsView: React.FC = () => {
               No transactions for {MONTHS[selectedMonth]} {selectedYear}.
             </div>
           ) : (
-            <div className="divide-y app-border">
+            <div className="divide-y app-border app-zoom-list">
               {report.breakdown.map((item) => {
                 const denom =
                   item.type === 'income' ? report.totalIncome : report.totalExpenses;
@@ -225,11 +225,11 @@ export const MonthlyReportsView: React.FC = () => {
                 return (
                   <div
                     key={`${item.type}-${item.name}`}
-                    className="px-5 py-3 flex items-center justify-between gap-3 text-sm"
+                    className="px-5 py-3 flex items-center justify-between gap-3"
                   >
                     <div>
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-xs app-text-muted font-mono-tabular">
+                      <div className="app-zoom-list-sm app-text-muted font-mono-tabular">
                         {item.type === 'income' ? 'Income' : 'Expense'} · {share}%
                       </div>
                     </div>

@@ -209,7 +209,7 @@ export const AnnualReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">Annual Income ({selectedYear})</div>
           <div
-            className="mt-2 text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{color: 'var(--income-text)'}}
           >
             {formatMoney(annualData.annualIncome, settings.currency, settings.numberFormat)}
@@ -218,7 +218,7 @@ export const AnnualReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">Annual Expenses ({selectedYear})</div>
           <div
-            className="mt-2 text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{color: 'var(--expense-text)'}}
           >
             {formatMoney(annualData.annualExpenses, settings.currency, settings.numberFormat)}
@@ -227,7 +227,7 @@ export const AnnualReportsView: React.FC = () => {
         <div className="rounded-xl border app-surface p-5">
           <div className="text-xs app-text-muted">Annual Net Income ({selectedYear})</div>
           <div
-            className="mt-2 text-2xl font-bold font-mono-tabular"
+            className="mt-2 app-zoom-kpi font-bold font-mono-tabular"
             style={{
               color: annualData.annualNet >= 0 ? 'var(--income-text)' : 'var(--expense-text)',
             }}
@@ -257,9 +257,9 @@ export const AnnualReportsView: React.FC = () => {
             <h2 className="text-base font-semibold">Month-wise Details (Click row to open)</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse app-zoom-list">
               <thead>
-                <tr className="border-b app-border app-surface-elevated text-xs app-text-muted">
+                <tr className="border-b app-border app-surface-elevated app-zoom-list-sm app-text-muted">
                   <th className="py-3 px-4 font-medium">Month</th>
                   <th className="py-3 px-4 font-medium text-right">Entries</th>
                   <th className="py-3 px-4 font-medium text-right">Income</th>
@@ -317,15 +317,15 @@ export const AnnualReportsView: React.FC = () => {
               No transactions recorded in {selectedYear}.
             </div>
           ) : (
-            <div className="divide-y app-border">
+            <div className="divide-y app-border app-zoom-list">
               {annualData.categoryBreakdown.map((item) => (
                 <div
                   key={`${item.type}-${item.name}`}
-                  className="px-5 py-3 flex items-center justify-between gap-3 text-sm"
+                  className="px-5 py-3 flex items-center justify-between gap-3"
                 >
                   <div>
                     <div className="font-medium">{item.name}</div>
-                    <div className="text-xs app-text-muted">
+                    <div className="app-zoom-list-sm app-text-muted">
                       {item.type === 'income' ? 'Income' : 'Expense'}
                     </div>
                   </div>
@@ -386,9 +386,9 @@ export const AnnualReportsView: React.FC = () => {
                   No transactions recorded in {FULL_MONTHS[drillMonthIdx]} {selectedYear}.
                 </div>
               ) : (
-                <table className="w-full text-left border-collapse text-sm">
+                <table className="w-full text-left border-collapse app-zoom-list">
                   <thead>
-                    <tr className="border-b app-border app-surface-elevated text-xs app-text-muted">
+                    <tr className="border-b app-border app-surface-elevated app-zoom-list-sm app-text-muted">
                       <th className="py-2.5 px-3 font-medium">Date</th>
                       <th className="py-2.5 px-3 font-medium">Category</th>
                       <th className="py-2.5 px-3 font-medium">Notes</th>

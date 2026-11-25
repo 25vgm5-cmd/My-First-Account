@@ -337,20 +337,20 @@ export const AddTransactionView: React.FC<AddTransactionViewProps> = ({
               {t(settings.language, 'noTransactions')}
             </div>
           ) : (
-            <div className="divide-y app-border">
+            <div className="divide-y app-border app-zoom-list-sm">
               {latestAdded.map((tx) => (
                 <div key={tx.id} className="px-5 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-xs font-medium truncate">
+                    <div className="font-medium truncate">
                       {tx.notes || catMap.get(tx.categoryId) || 'Others'}
                     </div>
-                    <div className="text-[11px] app-text-muted font-mono-tabular mt-0.5">
+                    <div className="app-zoom-list-xs app-text-muted font-mono-tabular mt-0.5">
                       {formatDateDisplay(tx.date, settings.dateFormat)} ·{' '}
                       {catMap.get(tx.categoryId) || 'Others'}
                     </div>
                   </div>
                   <span
-                    className="text-xs font-semibold font-mono-tabular shrink-0"
+                    className="font-semibold font-mono-tabular shrink-0"
                     style={{
                       color: tx.type === 'income' ? 'var(--income-text)' : 'var(--expense-text)',
                     }}

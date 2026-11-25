@@ -1127,7 +1127,7 @@ export const PdfImportView: React.FC = () => {
         <>
           <div className="rounded-b-xl border border-t-0 app-surface overflow-hidden">
             <div ref={bodyScrollRef} onScroll={handleBodyScroll} className="overflow-x-auto">
-              <table className="w-full min-w-[894px] table-fixed text-left border-collapse text-xs">
+              <table className="w-full min-w-[894px] table-fixed text-left border-collapse app-zoom-list-sm">
                 {tableColGroup}
                 <thead className="md:hidden">{tableHeaderRow}</thead>
                 <tbody className="divide-y app-border">

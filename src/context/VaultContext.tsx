@@ -41,7 +41,7 @@ import {
   saveVaultMeta,
   secureWipeDatabase,
 } from '../db/indexedDb';
-import {APP_VERSION} from '../types/finance';
+import {APP_VERSION, DEFAULT_FONT_ZOOM, normalizeFontZoom} from '../types/finance';
 import type {
   AppSettings,
   AutoBackupRecord,
@@ -49,6 +49,7 @@ import type {
   CurrencyCode,
   DateFormat,
   EncryptedBackupFile,
+  FontZoomSettings,
   Language,
   NumberFormat,
   SchemaMigrationRecord,
@@ -103,6 +104,7 @@ interface VaultContextValue {
   lockVault: () => void;
   updateSettings: (partial: Partial<AppSettings>) => Promise<void>;
   setTheme: (theme: ThemeMode) => Promise<void>;
+  setFontZoom: (fontZoom: FontZoomSettings) => Promise<void>;
   addTransaction: (input: {
     date: string;
     amount: number;
@@ -157,6 +159,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   confirmOnSensitiveActions: false,
   autoMonthlyBackupEnabled: true,
   schemaVersion: CURRENT_DATA_SCHEMA_VERSION,
+  fontZoom: DEFAULT_FONT_ZOOM,
 };
 
 function createDefaultCategories(): Category[] {
@@ -232,14 +235,44 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
     localStorage.setItem('mfa_preferred_theme', theme);
   }, []);
 
+  const applyFontZoomVars = useCallback((zoom?: Partial<FontZoomSettings> | null) => {
+    const normalized = normalizeFontZoom(zoom);
+    const rootStyle = document.documentElement.style;
+    rootStyle.setProperty('--zoom-titles-mobile', String(normalized.mobile.titles / 100));
+    rootStyle.setProperty('--zoom-amounts-mobile', String(normalized.mobile.amounts / 100));
+    rootStyle.setProperty('--zoom-lists-mobile', String(normalized.mobile.lists / 100));
+    rootStyle.setProperty('--zoom-titles-desktop', String(normalized.desktop.titles / 100));
+    rootStyle.setProperty('--zoom-amounts-desktop', String(normalized.desktop.amounts / 100));
+    rootStyle.setProperty('--zoom-lists-desktop', String(normalized.desktop.lists / 100));
+    try {
+      localStorage.setItem('mfa_font_zoom', JSON.stringify(normalized));
+    } catch {
+      // Ignore storage quota issues
+    }
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('mfa_preferred_theme') as ThemeMode | null;
     applyThemeClass(savedTheme === 'gray' ? 'gray' : 'dark');
-  }, [applyThemeClass]);
+    try {
+      const savedZoom = localStorage.getItem('mfa_font_zoom');
+      if (savedZoom) {
+        applyFontZoomVars(JSON.parse(savedZoom) as FontZoomSettings);
+      } else {
+        applyFontZoomVars(DEFAULT_FONT_ZOOM);
+      }
+    } catch {
+      applyFontZoomVars(DEFAULT_FONT_ZOOM);
+    }
+  }, [applyThemeClass, applyFontZoomVars]);
 
   useEffect(() => {
     applyThemeClass(settings.theme);
   }, [settings.theme, applyThemeClass]);
+
+  useEffect(() => {
+    applyFontZoomVars(settings.fontZoom);
+  }, [settings.fontZoom, applyFontZoomVars]);
 
   // Boot check: determine if vault exists in IndexedDB
   useEffect(() => {
@@ -512,6 +545,19 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
       }
     },
     [applyThemeClass, updateSettings]
+  );
+
+  const setFontZoom = useCallback(
+    async (fontZoom: FontZoomSettings) => {
+      const normalized = normalizeFontZoom(fontZoom);
+      applyFontZoomVars(normalized);
+      if (dekRef.current) {
+        await updateSettings({fontZoom: normalized});
+      } else {
+        setSettings((prev) => ({...prev, fontZoom: normalized}));
+      }
+    },
+    [applyFontZoomVars, updateSettings]
   );
 
   const addTransaction = useCallback(
@@ -1119,6 +1165,7 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
     lockVault,
     updateSettings,
     setTheme,
+    setFontZoom,
     addTransaction,
     addBatchTransactions,
     updateTransaction,

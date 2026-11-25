@@ -1,11 +1,31 @@
 import React, {useEffect, useState} from 'react';
-import {Check, CheckCircle2, Minus, Plus, RefreshCw, Save} from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  Minus,
+  Monitor,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Smartphone,
+  Type,
+} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
-import {APP_NAME, APP_VERSION} from '../types/finance';
+import {
+  APP_NAME,
+  APP_VERSION,
+  DEFAULT_FONT_ZOOM,
+  FONT_ZOOM_MAX,
+  FONT_ZOOM_MIN,
+  FONT_ZOOM_STEP,
+  normalizeFontZoom,
+} from '../types/finance';
 import type {
   CurrencyCode,
   DateFormat,
+  FontZoomProfile,
   Language,
   NumberFormat,
   ThemeMode,
@@ -15,7 +35,7 @@ import {CategoriesView} from './CategoriesView';
 import {PWAInstallButton} from './PWAComponents';
 
 export const PreferencesView: React.FC = () => {
-  const {settings, updateSettings, setTheme} = useVault();
+  const {settings, updateSettings, setTheme, setFontZoom} = useVault();
 
   const [language, setLanguage] = useState<Language>(settings.language);
   const [currency, setCurrency] = useState<CurrencyCode>(settings.currency);
@@ -31,8 +51,37 @@ export const PreferencesView: React.FC = () => {
 
   const [showFormatting, setShowFormatting] = useState(false);
   const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [showTextZoom, setShowTextZoom] = useState(false);
+  const [zoomDevice, setZoomDevice] = useState<'mobile' | 'desktop'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'desktop' : 'mobile'
+  );
   const [updateCheckStatus, setUpdateCheckStatus] = useState('');
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+
+  const currentZoom = normalizeFontZoom(settings.fontZoom);
+  const activeProfile = currentZoom[zoomDevice];
+
+  const handleAdjustZoom = (key: keyof FontZoomProfile, delta: number) => {
+    const nextVal = Math.min(
+      FONT_ZOOM_MAX,
+      Math.max(FONT_ZOOM_MIN, activeProfile[key] + delta)
+    );
+    if (nextVal === activeProfile[key]) return;
+    void setFontZoom({
+      ...currentZoom,
+      [zoomDevice]: {
+        ...activeProfile,
+        [key]: nextVal,
+      },
+    });
+  };
+
+  const handleResetDeviceZoom = () => {
+    void setFontZoom({
+      ...currentZoom,
+      [zoomDevice]: {...DEFAULT_FONT_ZOOM[zoomDevice]},
+    });
+  };
 
   useEffect(() => {
     setLanguage(settings.language);
@@ -362,6 +411,167 @@ export const PreferencesView: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Text Size & Font Zoom (Separate Mobile & PC profiles, collapsed by default) */}
+      <div className="rounded-xl border app-surface p-5">
+        <button
+          type="button"
+          onClick={() => setShowTextZoom((v) => !v)}
+          aria-expanded={showTextZoom}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Type className="w-4 h-4 text-emerald-500 shrink-0" />
+              <h2 className="text-base font-semibold">Text Size &amp; Font Zoom</h2>
+            </div>
+            <p className="text-xs app-text-muted mt-0.5 font-mono-tabular truncate">
+              Mobile {currentZoom.mobile.titles}/{currentZoom.mobile.amounts}/{currentZoom.mobile.lists}% · PC{' '}
+              {currentZoom.desktop.titles}/{currentZoom.desktop.amounts}/{currentZoom.desktop.lists}%
+            </p>
+          </div>
+          <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
+            {showTextZoom ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </span>
+        </button>
+
+        {showTextZoom && (
+          <div className="mt-4 pt-4 border-t app-border space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                <button
+                  type="button"
+                  onClick={() => setZoomDevice('mobile')}
+                  className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    zoomDevice === 'mobile' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Mobile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomDevice('desktop')}
+                  className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    zoomDevice === 'desktop' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>PC / Desktop</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleResetDeviceZoom}
+                disabled={
+                  activeProfile.titles === 100 &&
+                  activeProfile.amounts === 100 &&
+                  activeProfile.lists === 100
+                }
+                className="inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-1.5 text-xs font-medium app-text-secondary hover:border-emerald-500/50 disabled:opacity-45 min-h-[34px]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset {zoomDevice === 'mobile' ? 'Mobile' : 'PC'} to 100%</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                {
+                  key: 'titles' as const,
+                  label: 'Head & Section Titles',
+                  hint: 'Page headings & card titles across screens',
+                },
+                {
+                  key: 'amounts' as const,
+                  label: 'Main Display Amounts',
+                  hint: 'Dashboard Income, Expenses, Balance & report KPI totals',
+                },
+                {
+                  key: 'lists' as const,
+                  label: 'Record Lists & Tables',
+                  hint: 'Recent entries, Ledger, PDF Import & Report rows',
+                },
+              ].map((item) => {
+                const val = activeProfile[item.key];
+                return (
+                  <div
+                    key={item.key}
+                    className="rounded-xl border app-border app-surface-elevated px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium">{item.label}</div>
+                      <div className="text-xs app-text-muted">{item.hint}</div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustZoom(item.key, -FONT_ZOOM_STEP)}
+                        disabled={val <= FONT_ZOOM_MIN}
+                        aria-label={`Decrease ${item.label}`}
+                        className="inline-flex items-center justify-center rounded-lg border app-border app-surface px-3 py-1.5 text-xs font-bold hover:border-emerald-500/50 disabled:opacity-40 min-w-[44px] min-h-[38px]"
+                      >
+                        A−
+                      </button>
+                      <span
+                        className={`w-14 text-center text-xs font-mono-tabular font-semibold ${
+                          val !== 100 ? 'text-emerald-400' : 'app-text-secondary'
+                        }`}
+                      >
+                        {val}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustZoom(item.key, FONT_ZOOM_STEP)}
+                        disabled={val >= FONT_ZOOM_MAX}
+                        aria-label={`Increase ${item.label}`}
+                        className="inline-flex items-center justify-center rounded-lg border app-border app-surface px-3 py-1.5 text-xs font-bold hover:border-emerald-500/50 disabled:opacity-40 min-w-[44px] min-h-[38px]"
+                      >
+                        A+
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Live Preview Strip for Selected Device */}
+            <div className="rounded-xl border app-border p-4 space-y-2">
+              <div className="text-[11px] uppercase tracking-wider app-text-muted font-medium">
+                Live Preview ({zoomDevice === 'mobile' ? 'Mobile' : 'PC / Desktop'})
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <span
+                  className="font-display font-bold"
+                  style={{fontSize: `calc(1.125rem * ${activeProfile.titles / 100})`}}
+                >
+                  Dashboard Title
+                </span>
+                <span
+                  className="font-mono-tabular font-bold"
+                  style={{
+                    fontSize: `calc(1.375rem * ${activeProfile.amounts / 100})`,
+                    color: 'var(--income-text)',
+                  }}
+                >
+                  {formatMoney(1250, settings.currency, settings.numberFormat)}
+                </span>
+              </div>
+              <div
+                className="pt-2 border-t app-border flex items-center justify-between gap-3"
+                style={{fontSize: `calc(0.875rem * ${activeProfile.lists / 100})`}}
+              >
+                <span className="truncate app-text-secondary">Salary · Monthly Credit</span>
+                <span className="font-mono-tabular font-semibold shrink-0" style={{color: 'var(--income-text)'}}>
+                  +{formatMoney(1250, settings.currency, settings.numberFormat)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Application Information */}
       <div className="rounded-xl border app-surface p-5 space-y-2">

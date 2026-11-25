@@ -401,9 +401,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse app-zoom-list">
               <thead>
-                <tr className="border-b app-border app-surface-elevated text-xs app-text-muted">
+                <tr className="border-b app-border app-surface-elevated app-zoom-list-sm app-text-muted">
                   <th className="py-3 px-4 font-medium whitespace-nowrap">
                     <button
                       type="button"
@@ -458,13 +458,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     key={tx.id}
                     className="hover:bg-black/5 dark:hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="py-3 px-4 font-mono-tabular text-xs whitespace-nowrap">
+                    <td className="py-3 px-4 font-mono-tabular app-zoom-list-sm whitespace-nowrap">
                       {formatDateDisplay(tx.date, settings.dateFormat)}
                     </td>
                     <td className="py-3 px-4 font-medium whitespace-nowrap">
                       {catMap.get(tx.categoryId) || 'Others'}
                     </td>
-                    <td className="py-3 px-4 text-xs whitespace-nowrap">
+                    <td className="py-3 px-4 app-zoom-list-sm whitespace-nowrap">
                       <span
                         style={{
                           color:
@@ -574,7 +574,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y app-border my-4">
+            <div className="flex-1 overflow-y-auto divide-y app-border my-4 app-zoom-list">
               {trash.length === 0 ? (
                 <div className="py-10 text-center text-sm app-text-muted">Trash is empty.</div>
               ) : (

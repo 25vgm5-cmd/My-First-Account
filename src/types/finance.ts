@@ -1,5 +1,5 @@
 export const APP_NAME = 'MyFirst Account';
-export const APP_VERSION = '1.26';
+export const APP_VERSION = '1.27';
 
 export type Language = 'en' | 'ta' | 'tanglish';
 
@@ -12,6 +12,46 @@ export type DateFormat = 'DD-MM-YYYY' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-D
 export type NumberFormat = 'indian' | 'international';
 
 export type TransactionType = 'income' | 'expense';
+
+export interface FontZoomProfile {
+  titles: number; // percentage 85..125
+  amounts: number; // percentage 85..125
+  lists: number; // percentage 85..125
+}
+
+export interface FontZoomSettings {
+  mobile: FontZoomProfile;
+  desktop: FontZoomProfile;
+}
+
+export const FONT_ZOOM_MIN = 85;
+export const FONT_ZOOM_MAX = 125;
+export const FONT_ZOOM_STEP = 5;
+
+export const DEFAULT_FONT_ZOOM: FontZoomSettings = {
+  mobile: {titles: 100, amounts: 100, lists: 100},
+  desktop: {titles: 100, amounts: 100, lists: 100},
+};
+
+function clampZoomPercent(value: unknown): number {
+  const num = typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : 100;
+  return Math.min(FONT_ZOOM_MAX, Math.max(FONT_ZOOM_MIN, num));
+}
+
+export function normalizeFontZoom(raw?: Partial<FontZoomSettings> | null): FontZoomSettings {
+  return {
+    mobile: {
+      titles: clampZoomPercent(raw?.mobile?.titles),
+      amounts: clampZoomPercent(raw?.mobile?.amounts),
+      lists: clampZoomPercent(raw?.mobile?.lists),
+    },
+    desktop: {
+      titles: clampZoomPercent(raw?.desktop?.titles),
+      amounts: clampZoomPercent(raw?.desktop?.amounts),
+      lists: clampZoomPercent(raw?.desktop?.lists),
+    },
+  };
+}
 
 export interface Transaction {
   id: string; // Unique Transaction ID e.g. TXN-20261122-A4F91C
@@ -50,6 +90,7 @@ export interface AppSettings {
   confirmOnSensitiveActions: boolean;
   autoMonthlyBackupEnabled: boolean;
   schemaVersion: number;
+  fontZoom?: FontZoomSettings;
 }
 
 export interface EncryptedEnvelope {

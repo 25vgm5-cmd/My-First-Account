@@ -25,6 +25,23 @@
   --brand-blue: #38BDF8;
   --mobile-header-height: 3rem;
   --mobile-header-offset: calc(var(--mobile-header-height) + env(safe-area-inset-top, 0px));
+  --zoom-titles-mobile: 1;
+  --zoom-amounts-mobile: 1;
+  --zoom-lists-mobile: 1;
+  --zoom-titles-desktop: 1;
+  --zoom-amounts-desktop: 1;
+  --zoom-lists-desktop: 1;
+  --zoom-titles: var(--zoom-titles-mobile);
+  --zoom-amounts: var(--zoom-amounts-mobile);
+  --zoom-lists: var(--zoom-lists-mobile);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --zoom-titles: var(--zoom-titles-desktop);
+    --zoom-amounts: var(--zoom-amounts-desktop);
+    --zoom-lists: var(--zoom-lists-desktop);
+  }
 }
 
 html.theme-gray {
@@ -263,6 +280,75 @@ html.theme-dark {
 
 .pb-safe {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Targeted Typography Zoom (Head & Titles, Display Amounts, Record Lists) */
+main h1 {
+  font-size: calc(1.25rem * var(--zoom-titles));
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  main h1 {
+    font-size: calc(1.5rem * var(--zoom-titles));
+    line-height: 1.25;
+  }
+}
+
+main h2 {
+  font-size: calc(1rem * var(--zoom-titles));
+  line-height: 1.35;
+}
+
+.app-zoom-amount {
+  font-size: calc(1.5rem * var(--zoom-amounts));
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .app-zoom-amount {
+    font-size: calc(1.875rem * var(--zoom-amounts));
+    line-height: 1.15;
+  }
+}
+
+.app-zoom-kpi {
+  font-size: calc(1.25rem * var(--zoom-amounts));
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  .app-zoom-kpi {
+    font-size: calc(1.5rem * var(--zoom-amounts));
+    line-height: 1.2;
+  }
+}
+
+.app-zoom-list {
+  font-size: calc(0.875rem * var(--zoom-lists));
+  line-height: 1.45;
+}
+
+.app-zoom-list-responsive {
+  font-size: calc(0.75rem * var(--zoom-lists));
+  line-height: 1.45;
+}
+
+@media (min-width: 640px) {
+  .app-zoom-list-responsive {
+    font-size: calc(0.875rem * var(--zoom-lists));
+    line-height: 1.45;
+  }
+}
+
+.app-zoom-list-sm {
+  font-size: calc(0.75rem * var(--zoom-lists));
+  line-height: 1.45;
+}
+
+.app-zoom-list-xs {
+  font-size: calc(0.6875rem * var(--zoom-lists));
+  line-height: 1.4;
 }
 
 /* Print Stylesheet for clean financial statements */

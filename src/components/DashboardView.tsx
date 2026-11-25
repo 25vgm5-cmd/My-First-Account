@@ -220,7 +220,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <ArrowUpRight className="w-4 h-4 text-emerald-500" />
           </div>
           <div
-            className="mt-3 text-2xl sm:text-3xl font-bold font-mono-tabular tracking-tight"
+            className="mt-3 app-zoom-amount font-bold font-mono-tabular tracking-tight"
             style={{color: 'var(--income-text)'}}
           >
             {formatMoney(summary.currentMonthIncome, settings.currency, settings.numberFormat)}
@@ -242,7 +242,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <ArrowDownRight className="w-4 h-4 text-rose-500" />
           </div>
           <div
-            className="mt-3 text-2xl sm:text-3xl font-bold font-mono-tabular tracking-tight"
+            className="mt-3 app-zoom-amount font-bold font-mono-tabular tracking-tight"
             style={{color: 'var(--expense-text)'}}
           >
             {formatMoney(summary.currentMonthExpenses, settings.currency, settings.numberFormat)}
@@ -263,7 +263,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
             <Wallet className="w-4 h-4" style={{color: 'var(--accent-primary)'}} />
           </div>
-          <div className="mt-3 text-2xl sm:text-3xl font-bold font-mono-tabular tracking-tight">
+          <div className="mt-3 app-zoom-amount font-bold font-mono-tabular tracking-tight">
             {formatMoney(summary.currentBalance, settings.currency, settings.numberFormat)}
           </div>
           <div className="mt-2 text-xs app-text-muted font-mono-tabular">
@@ -405,8 +405,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead className="app-surface-elevated border-b app-border text-xs app-text-muted">
+            <table className="w-full text-left border-collapse app-zoom-list">
+              <thead className="app-surface-elevated border-b app-border app-zoom-list-sm app-text-muted">
                 <tr>
                   <th className="py-3 px-4 font-medium whitespace-nowrap w-14">S.No</th>
                   <th className="py-3 px-4 font-medium whitespace-nowrap">
@@ -445,22 +445,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       key={tx.id}
                       className="hover:bg-black/5 dark:hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-3 px-4 font-mono-tabular text-xs app-text-muted whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono-tabular app-zoom-list-sm app-text-muted whitespace-nowrap">
                         {meta?.serialNo ?? '—'}
                       </td>
-                      <td className="py-3 px-4 font-mono-tabular text-xs whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono-tabular app-zoom-list-sm whitespace-nowrap">
                         {formatDateDisplay(tx.date, settings.dateFormat)}
                       </td>
                       <td className="py-3 px-4 min-w-[200px]">
-                        <div className="font-medium text-xs sm:text-sm leading-snug">
+                        <div className="font-medium app-zoom-list-responsive leading-snug">
                           {tx.notes || catName}
                         </div>
                         {tx.notes && (
-                          <div className="text-[11px] app-text-muted mt-0.5">{catName}</div>
+                          <div className="app-zoom-list-xs app-text-muted mt-0.5">{catName}</div>
                         )}
                       </td>
                       <td
-                        className="py-3 px-4 text-right font-mono-tabular text-xs sm:text-sm font-semibold whitespace-nowrap"
+                        className="py-3 px-4 text-right font-mono-tabular app-zoom-list-responsive font-semibold whitespace-nowrap"
                         style={isInc ? {color: 'var(--income-text)'} : undefined}
                       >
                         {isInc ? (
@@ -470,7 +470,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         )}
                       </td>
                       <td
-                        className="py-3 px-4 text-right font-mono-tabular text-xs sm:text-sm font-semibold whitespace-nowrap"
+                        className="py-3 px-4 text-right font-mono-tabular app-zoom-list-responsive font-semibold whitespace-nowrap"
                         style={!isInc ? {color: 'var(--expense-text)'} : undefined}
                       >
                         {!isInc ? (
@@ -479,7 +479,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <span className="app-text-muted font-normal">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono-tabular text-xs sm:text-sm font-bold whitespace-nowrap">
+                      <td className="py-3 px-4 text-right font-mono-tabular app-zoom-list-responsive font-bold whitespace-nowrap">
                         {meta
                           ? formatMoney(meta.balance, settings.currency, settings.numberFormat)
                           : '—'}

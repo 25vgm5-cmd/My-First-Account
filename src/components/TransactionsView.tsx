@@ -252,7 +252,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-2 text-xs font-medium app-text-secondary hover:opacity-80 min-h-[40px] whitespace-nowrap shrink-0"
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-2 text-xs font-medium app-text-secondary hover:opacity-80 min-h-[40px] whitespace-nowrap shrink-0"
           >
             <Printer className="w-4 h-4" />
             <span className="hidden sm:inline">{t(settings.language, 'printLedger')}</span>

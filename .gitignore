@@ -7,5 +7,6 @@ coverage/
 .env*
 !.env.example
 dev-dist/
+dist-single/
 android/
 

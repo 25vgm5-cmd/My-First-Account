@@ -95,3 +95,14 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Build Windows Standalone Single HTML
+        run: npm run build:html
+
+      - name: Upload Single HTML Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyFirst-Account-Single-HTML
+          path: dist-single/MyFirstAccount.html
+          if-no-files-found: error
+          retention-days: 30

@@ -294,19 +294,37 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             />
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-3 flex items-center gap-2">
             <select
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value as 'all' | 'income' | 'expense');
                 setPage(1);
               }}
-              className="w-full rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
+              className="flex-1 min-w-0 rounded-lg border app-input px-3 py-2 text-sm min-h-[42px]"
             >
               <option value="all">{t(settings.language, 'allTypes')}</option>
               <option value="income">{t(settings.language, 'income')}</option>
               <option value="expense">{t(settings.language, 'expenses')}</option>
             </select>
+
+            <div className="md:hidden flex items-center gap-1.5 shrink-0">
+              <span className="text-xs app-text-muted whitespace-nowrap">Rows:</span>
+              <select
+                aria-label="Rows per page"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-lg border app-input px-2.5 py-2 text-xs font-mono-tabular min-h-[42px]"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
 
           <div className="md:col-span-4">
@@ -369,7 +387,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-xs app-text-muted">
+          <div className="hidden md:flex items-center gap-2 text-xs app-text-muted">
             <span>Rows per page:</span>
             <select
               value={pageSize}

@@ -219,25 +219,43 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium app-text-secondary mb-1.5">
-                {t(settings.language, 'date')}
+          <div>
+            <label className="block text-xs font-medium app-text-secondary mb-1.5">
+              {t(settings.language, 'date')}
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setDuplicateMatch(null);
+              }}
+              className="w-full rounded-lg border app-input px-3 py-2.5 text-sm font-mono-tabular min-h-[44px]"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <label className="block text-xs font-medium app-text-secondary mb-1.5 truncate">
+                {t(settings.language, 'category')}
               </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setDuplicateMatch(null);
-                }}
-                className="w-full rounded-lg border app-input px-3 py-2.5 text-sm font-mono-tabular min-h-[44px]"
+              <select
+                value={categoryId}
+                onChange={(e) => setActiveCategoryId(e.target.value)}
+                className="w-full rounded-lg border app-input px-3 py-2.5 text-sm min-h-[44px]"
                 required
-              />
+              >
+                {filteredCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium app-text-secondary mb-1.5">
+            <div className="min-w-0">
+              <label className="block text-xs font-medium app-text-secondary mb-1.5 truncate">
                 {t(settings.language, 'amount')} ({CURRENCY_META[settings.currency].symbol})
               </label>
               <input
@@ -254,24 +272,6 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 required
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium app-text-secondary mb-1.5">
-              {t(settings.language, 'category')}
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setActiveCategoryId(e.target.value)}
-              className="w-full rounded-lg border app-input px-3 py-2.5 text-sm min-h-[44px]"
-              required
-            >
-              {filteredCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>

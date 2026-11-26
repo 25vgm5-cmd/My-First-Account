@@ -18,6 +18,7 @@ function notifyListeners() {
 if (typeof window !== 'undefined') {
   globalIsInstalled =
     Capacitor.isNativePlatform() ||
+    window.location.protocol === 'file:' ||
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as unknown as {standalone?: boolean}).standalone === true;
 

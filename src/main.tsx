@@ -16,8 +16,8 @@ if (Capacitor.isNativePlatform()) {
       // Safe no-op on Android 15+ where SystemBars insetsHandling='css' applies automatically
     }
   })();
-} else {
-  // Register Service Worker for offline PWA execution & foreground update checks on browsers
+} else if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
+  // Register Service Worker for offline PWA execution & foreground update checks on HTTP(S) browsers
   registerSW({
     immediate: true,
     onRegisteredSW(_swUrl, registration) {

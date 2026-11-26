@@ -159,6 +159,10 @@ export const PreferencesView: React.FC = () => {
         setUpdateCheckStatus(`Running v${APP_VERSION} (Android APK). Install a newer APK build to update.`);
         return;
       }
+      if (window.location.protocol === 'file:') {
+        setUpdateCheckStatus(`Running v${APP_VERSION} (Standalone Single HTML).`);
+        return;
+      }
       if (!('serviceWorker' in navigator)) {
         setUpdateCheckStatus(`Running v${APP_VERSION}.`);
         return;

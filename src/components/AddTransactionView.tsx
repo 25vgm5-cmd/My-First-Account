@@ -132,22 +132,13 @@ export const AddTransactionView: React.FC<AddTransactionViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="app-sticky-header -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 flex flex-wrap items-center justify-between gap-4 pb-4 border-b app-border">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-            {t(settings.language, 'addTransaction')}
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm app-text-muted">
-            Log a new encrypted income or expense transaction into your vault.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate('transactions')}
-          className="rounded-lg border app-border px-3.5 py-2 text-xs font-medium app-text-secondary hover:opacity-80 min-h-[40px]"
-        >
-          View Transactions
-        </button>
+      <div className="app-sticky-header -mt-6 pt-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 pb-4 border-b app-border">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+          {t(settings.language, 'addTransaction')}
+        </h1>
+        <p className="mt-1 text-xs sm:text-sm app-text-muted">
+          Log a new encrypted income or expense transaction into your vault.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -195,25 +186,43 @@ export const AddTransactionView: React.FC<AddTransactionViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium app-text-secondary mb-1.5">
-                {t(settings.language, 'date')}
+          <div>
+            <label className="block text-xs font-medium app-text-secondary mb-1.5">
+              {t(settings.language, 'date')}
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setDuplicateMatch(null);
+              }}
+              className="w-full rounded-lg border app-input px-3 py-2.5 text-sm font-mono-tabular min-h-[44px]"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <label className="block text-xs font-medium app-text-secondary mb-1.5 truncate">
+                {t(settings.language, 'category')}
               </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setDuplicateMatch(null);
-                }}
-                className="w-full rounded-lg border app-input px-3 py-2.5 text-sm font-mono-tabular min-h-[44px]"
+              <select
+                value={categoryId}
+                onChange={(e) => setActiveCategoryId(e.target.value)}
+                className="w-full rounded-lg border app-input px-3 py-2.5 text-sm min-h-[44px]"
                 required
-              />
+              >
+                {filteredCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium app-text-secondary mb-1.5">
+            <div className="min-w-0">
+              <label className="block text-xs font-medium app-text-secondary mb-1.5 truncate">
                 {t(settings.language, 'amount')} ({CURRENCY_META[settings.currency].symbol})
               </label>
               <input
@@ -230,24 +239,6 @@ export const AddTransactionView: React.FC<AddTransactionViewProps> = ({
                 required
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium app-text-secondary mb-1.5">
-              {t(settings.language, 'category')}
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setActiveCategoryId(e.target.value)}
-              className="w-full rounded-lg border app-input px-3 py-2.5 text-sm min-h-[44px]"
-              required
-            >
-              {filteredCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>

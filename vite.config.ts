@@ -4,13 +4,18 @@ import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
+import {viteSingleFile} from 'vite-plugin-singlefile';
 
 export default defineConfig(() => {
+  const isSingleFile = process.env.SINGLE_FILE === 'true';
+
   return {
+    base: isSingleFile ? './' : '/',
     plugins: [
       react(),
       tailwindcss(),
       VitePWA({
+        disable: isSingleFile,
         registerType: 'autoUpdate',
         includeAssets: [
           'icon.svg',
@@ -91,6 +96,7 @@ export default defineConfig(() => {
           type: 'module',
         },
       }),
+      ...(isSingleFile ? [viteSingleFile()] : []),
       // Copies src/assets into dist/ so root-relative URLs like
       // "/src/assets/images/..." (e.g. generate_image output) still resolve
       // in production builds. Do not remove.
@@ -98,7 +104,7 @@ export default defineConfig(() => {
         name: 'copy-unbundled-src-assets',
         apply: 'build',
         closeBundle(error?: Error): void {
-          if (error) {
+          if (error || isSingleFile) {
             return;
           }
           const distDir = path.resolve(__dirname, 'dist');
@@ -110,6 +116,16 @@ export default defineConfig(() => {
         },
       },
     ],
+    ...(isSingleFile
+      ? {
+          build: {
+            outDir: 'dist-single',
+            emptyOutDir: true,
+            assetsInlineLimit: 100_000_000,
+            cssCodeSplit: false,
+          },
+        }
+      : {}),
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

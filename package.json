@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "build:html": "node scripts/build-single-html.mjs",
     "preview": "vite preview",
     "cap:sync": "npx cap sync android",
     "apk:prepare": "npm run build && npx cap sync android",
@@ -44,6 +45,7 @@
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite-plugin-singlefile": "^2.3.4"
   }
 }

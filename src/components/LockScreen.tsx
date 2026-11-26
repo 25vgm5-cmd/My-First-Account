@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
-import {Eye, EyeOff, KeyRound, Lock, Moon, Sun, Upload} from 'lucide-react';
+import {Eye, EyeOff, KeyRound, Lock, Moon, Palette, Sun, Upload} from 'lucide-react';
 import {useVault} from '../context/VaultContext';
 import {t} from '../i18n/translations';
+import {getNextThemeMode, getThemeSwitchLabel} from '../utils/themeUtils';
 import {BrandTitle} from './BrandTitle';
 
 export const LockScreen: React.FC = () => {
@@ -109,12 +110,18 @@ export const LockScreen: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => void setTheme(settings.theme === 'dark' ? 'gray' : 'dark')}
+            onClick={() => void setTheme(getNextThemeMode(settings.theme))}
             className="p-2.5 rounded-lg border app-border app-text-secondary hover:opacity-80 min-w-[40px] min-h-[40px] flex items-center justify-center"
-            title={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+            title={getThemeSwitchLabel(settings.theme)}
             aria-label="Toggle theme"
           >
-            {settings.theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {settings.theme === 'dark' ? (
+              <Sun className="w-4 h-4" />
+            ) : settings.theme === 'gray' ? (
+              <Palette className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
           </button>
         </div>
 

@@ -9,6 +9,7 @@ import {
   Lock,
   Menu,
   Moon,
+  Palette,
   Plus,
   Printer,
   Settings,
@@ -34,6 +35,7 @@ import {VaultProvider, useVault} from './context/VaultContext';
 import {t} from './i18n/translations';
 import type {ActiveTab, Transaction, TransactionType} from './types/finance';
 import {formatMoney} from './utils/formatters';
+import {getNextThemeMode, getThemeSwitchLabel} from './utils/themeUtils';
 
 const AppShell: React.FC = () => {
   const {status, settings, summary, setTheme, lockVault} = useVault();
@@ -235,13 +237,15 @@ const AppShell: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => void setTheme(settings.theme === 'dark' ? 'gray' : 'dark')}
-              title={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+              onClick={() => void setTheme(getNextThemeMode(settings.theme))}
+              title={getThemeSwitchLabel(settings.theme)}
               className="p-1.5 rounded-lg border app-border app-text-secondary active:scale-95 transition-transform min-w-[36px] min-h-[36px] flex items-center justify-center"
-              aria-label={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+              aria-label={getThemeSwitchLabel(settings.theme)}
             >
               {settings.theme === 'dark' ? (
                 <Sun className="w-4 h-4" />
+              ) : settings.theme === 'gray' ? (
+                <Palette className="w-4 h-4" />
               ) : (
                 <Moon className="w-4 h-4" />
               )}

@@ -6,6 +6,7 @@ import {
   ListOrdered,
   Lock,
   Moon,
+  Palette,
   Pencil,
   Plus,
   Printer,
@@ -22,6 +23,7 @@ import {
   formatMoney,
   getTodayISO,
 } from '../utils/formatters';
+import {getNextThemeMode, getThemeSwitchLabel} from '../utils/themeUtils';
 import {PasswordConfirmModal} from './PasswordConfirmModal';
 
 interface DashboardViewProps {
@@ -107,9 +109,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: settings.timeFormat !== '24h',
     });
     return `${formattedDate} · ${timeStr}`;
-  }, [now, settings.dateFormat]);
+  }, [now, settings.dateFormat, settings.timeFormat]);
 
   const currentMonthLabel = useMemo(() => {
     return now.toLocaleDateString(undefined, {month: 'long', year: 'numeric'});
@@ -178,19 +181,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <button
             type="button"
-            onClick={() => void setTheme(settings.theme === 'dark' ? 'gray' : 'dark')}
+            onClick={() => void setTheme(getNextThemeMode(settings.theme))}
             className="inline-flex items-center gap-1.5 rounded-lg border app-border px-3 py-2 text-xs font-medium app-text-secondary hover:opacity-80 min-h-[40px] whitespace-nowrap shrink-0"
-            title={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+            title={getThemeSwitchLabel(settings.theme)}
           >
             {settings.theme === 'dark' ? (
               <Sun className="w-4 h-4" />
+            ) : settings.theme === 'gray' ? (
+              <Palette className="w-4 h-4" />
             ) : (
               <Moon className="w-4 h-4" />
             )}
             <span className="hidden md:inline">
               {settings.theme === 'dark'
                 ? t(settings.language, 'grayMode')
-                : t(settings.language, 'darkMode')}
+                : settings.theme === 'gray'
+                  ? 'Custom Mode'
+                  : t(settings.language, 'darkMode')}
             </span>
           </button>
 

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Minus,
   Monitor,
+  Palette,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -17,30 +18,38 @@ import {t} from '../i18n/translations';
 import {
   APP_NAME,
   APP_VERSION,
+  CUSTOM_THEME_PRESETS,
+  DEFAULT_CUSTOM_THEME,
   DEFAULT_FONT_ZOOM,
   FONT_ZOOM_MAX,
   FONT_ZOOM_MIN,
   FONT_ZOOM_STEP,
+  normalizeCustomTheme,
   normalizeFontZoom,
 } from '../types/finance';
 import type {
   CurrencyCode,
+  CustomThemeColors,
   DateFormat,
   FontZoomProfile,
   Language,
   NumberFormat,
   ThemeMode,
+  TimeFormat,
 } from '../types/finance';
 import {CURRENCY_META, formatMoney} from '../utils/formatters';
 import {CategoriesView} from './CategoriesView';
 import {PWAInstallButton} from './PWAComponents';
 
 export const PreferencesView: React.FC = () => {
-  const {settings, updateSettings, setTheme, setFontZoom} = useVault();
+  const {settings, updateSettings, setTheme, setCustomTheme, setFontZoom} = useVault();
 
   const [language, setLanguage] = useState<Language>(settings.language);
   const [currency, setCurrency] = useState<CurrencyCode>(settings.currency);
   const [dateFormat, setDateFormat] = useState<DateFormat>(settings.dateFormat);
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(
+    settings.timeFormat === '24h' ? '24h' : '12h'
+  );
   const [numberFormat, setNumberFormat] = useState<NumberFormat>(settings.numberFormat);
   const [themeMode, setThemeMode] = useState<ThemeMode>(settings.theme);
   const [openingBalance, setOpeningBalance] = useState(String(settings.openingBalance));
@@ -97,6 +106,10 @@ export const PreferencesView: React.FC = () => {
   }, [settings.dateFormat]);
 
   useEffect(() => {
+    setTimeFormat(settings.timeFormat === '24h' ? '24h' : '12h');
+  }, [settings.timeFormat]);
+
+  useEffect(() => {
     setNumberFormat(settings.numberFormat);
   }, [settings.numberFormat]);
 
@@ -112,11 +125,22 @@ export const PreferencesView: React.FC = () => {
     setOpeningBalanceDate(settings.openingBalanceDate);
   }, [settings.openingBalanceDate]);
 
+  const activeCustomTheme = normalizeCustomTheme(settings.customTheme);
+
+  const handleUpdateCustomColor = (key: keyof CustomThemeColors, color: string) => {
+    void setCustomTheme({
+      ...activeCustomTheme,
+      [key]: color,
+    });
+  };
+
+  const savedTimeFormat: TimeFormat = settings.timeFormat === '24h' ? '24h' : '12h';
   const parsedBalance = parseFloat(openingBalance || '0');
   const hasUnsavedChanges =
     language !== settings.language ||
     currency !== settings.currency ||
     dateFormat !== settings.dateFormat ||
+    timeFormat !== savedTimeFormat ||
     numberFormat !== settings.numberFormat ||
     parsedBalance !== settings.openingBalance ||
     openingBalanceDate !== settings.openingBalanceDate;
@@ -138,6 +162,7 @@ export const PreferencesView: React.FC = () => {
         language,
         currency,
         dateFormat,
+        timeFormat,
         numberFormat,
         openingBalance: val,
         openingBalanceDate,
@@ -216,7 +241,7 @@ export const PreferencesView: React.FC = () => {
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold">Display &amp; Regional Formatting</h2>
                   <p className="text-xs app-text-muted mt-0.5 font-mono-tabular truncate">
-                    {language.toUpperCase()} · {currency} · {dateFormat}
+                    {language.toUpperCase()} · {currency} · {dateFormat} · {timeFormat === '24h' ? '24h' : '12h'}
                   </p>
                 </div>
                 <span className="w-7 h-7 rounded-lg border app-border app-surface-elevated flex items-center justify-center shrink-0 app-text-secondary">
@@ -292,6 +317,36 @@ export const PreferencesView: React.FC = () => {
                   <option value="international">International (100,000.00)</option>
                 </select>
                   </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1.5">Time Format (Dashboard Clock)</label>
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimeFormat('12h');
+                    setSavedMsg('');
+                  }}
+                  className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[38px] ${
+                    timeFormat === '12h' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  12h (AM / PM)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimeFormat('24h');
+                    setSavedMsg('');
+                  }}
+                  className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[38px] ${
+                    timeFormat === '24h' ? 'bg-emerald-600 text-white' : 'app-text-muted'
+                  }`}
+                >
+                  24h (00:00)
+                </button>
+              </div>
+            </div>
                 </div>
               )}
             </div>
@@ -355,74 +410,127 @@ export const PreferencesView: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Theme Mode matching combined height of Left Column */}
+          {/* Right Column: Theme Mode (Dark, Gray, Custom) */}
           <div className="rounded-xl border app-surface p-5 flex flex-col gap-4 h-full">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold">Theme Mode</h2>
               <span className="text-xs app-text-muted">Instant Switch</span>
             </div>
-            <div className="grid grid-cols-2 gap-3 flex-1 lg:max-h-[120px]">
-              {(['dark', 'gray'] as ThemeMode[]).map((mode) => (
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-3 gap-2.5 ${
+                themeMode !== 'custom' ? 'flex-1 lg:max-h-[120px]' : ''
+              }`}
+            >
+              {(
+                [
+                  {id: 'dark', title: 'Dark Mode', sub: 'Deep Obsidian'},
+                  {id: 'gray', title: 'Gray Mode', sub: 'Soft Ash Gray'},
+                  {id: 'custom', title: 'Custom Mode', sub: 'Your Colors'},
+                ] as Array<{id: ThemeMode; title: string; sub: string}>
+              ).map((mode) => (
                 <button
-                  key={mode}
+                  key={mode.id}
                   type="button"
                   onClick={() => {
-                    setThemeMode(mode);
-                    void setTheme(mode);
+                    setThemeMode(mode.id);
+                    void setTheme(mode.id);
                   }}
-                  className={`flex items-center justify-between rounded-xl border p-4 text-left h-full min-h-[82px] ${
-                    themeMode === mode
+                  className={`flex items-center justify-between rounded-xl border p-3.5 text-left min-h-[72px] ${
+                    themeMode !== 'custom' ? 'h-full' : ''
+                  } ${
+                    themeMode === mode.id
                       ? 'border-emerald-500 bg-emerald-500/10'
                       : 'app-border'
                   }`}
                 >
-                  <div>
-                    <div className="text-sm font-semibold">
-                      {mode === 'dark' ? 'Dark Mode' : 'Gray Mode'}
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold flex items-center gap-1.5">
+                      {mode.id === 'custom' && <Palette className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                      <span className="truncate">{mode.title}</span>
                     </div>
-                    <div className="text-xs app-text-muted mt-0.5">
-                      {mode === 'dark' ? 'Deep Obsidian' : 'Soft Ash Gray'}
-                    </div>
+                    <div className="text-xs app-text-muted mt-0.5 truncate">{mode.sub}</div>
                   </div>
-                  {themeMode === mode && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
+                  {themeMode === mode.id && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
                 </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Preferences Save Bar & Confirmation */}
-        <div className="rounded-xl border app-surface px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs">
-            {errorMsg ? (
-              <span className="text-rose-400 font-medium">{errorMsg}</span>
-            ) : savedMsg ? (
-              <span className="inline-flex items-center gap-1.5 text-emerald-500 font-medium">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>{savedMsg}</span>
-              </span>
-            ) : hasUnsavedChanges ? (
-              <span className="text-amber-400 font-medium">
-                You have unsaved changes. Click Save to apply.
-              </span>
-            ) : (
-              <span className="app-text-muted">All preference settings are saved.</span>
+            {themeMode === 'custom' && (
+              <div className="pt-3 border-t app-border space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-medium app-text-secondary">
+                    Customize Theme Colors
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void setCustomTheme(DEFAULT_CUSTOM_THEME)}
+                    className="inline-flex items-center gap-1 rounded-lg border app-border px-2.5 py-1 text-[11px] font-medium app-text-secondary hover:border-emerald-500/50"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {CUSTOM_THEME_PRESETS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => void setCustomTheme(preset.colors)}
+                      className="flex items-center gap-2 rounded-lg border app-border app-surface-elevated px-2.5 py-1.5 text-left hover:border-emerald-500/50"
+                    >
+                      <span
+                        className="w-4 h-4 rounded-sm border border-white/20 shrink-0"
+                        style={{backgroundColor: preset.colors.canvasBg}}
+                      />
+                      <span
+                        className="w-3 h-3 rounded-sm shrink-0"
+                        style={{backgroundColor: preset.colors.accentPrimary}}
+                      />
+                      <span className="text-[11px] font-medium truncate">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* 5 Custom Color Pickers */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(
+                    [
+                      {key: 'canvasBg', label: 'Background'},
+                      {key: 'surfaceBg', label: 'Cards / Panel'},
+                      {key: 'textPrimary', label: 'Text Color'},
+                      {key: 'accentPrimary', label: 'Accent / Save'},
+                      {key: 'brandTitle', label: 'App Title'},
+                    ] as Array<{key: keyof CustomThemeColors; label: string}>
+                  ).map((item) => (
+                    <label
+                      key={item.key}
+                      className="flex items-center justify-between gap-2 rounded-lg border app-border app-surface-elevated px-2.5 py-1.5 cursor-pointer"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium truncate">{item.label}</div>
+                        <div className="text-[10px] font-mono-tabular app-text-muted uppercase">
+                          {activeCustomTheme[item.key]}
+                        </div>
+                      </div>
+                      <input
+                        type="color"
+                        value={activeCustomTheme[item.key]}
+                        onChange={(e) => handleUpdateCustomColor(item.key, e.target.value)}
+                        className="w-7 h-7 rounded border-0 bg-transparent cursor-pointer shrink-0 p-0"
+                        aria-label={item.label}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-semibold text-white min-h-[40px] disabled:opacity-60"
-            style={{backgroundColor: 'var(--accent-primary)'}}
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>{saving ? 'Saving...' : t(settings.language, 'save')}</span>
-          </button>
         </div>
-      </form>
 
-      {/* Text Size & Font Zoom (Separate Mobile & PC profiles, collapsed by default) */}
-      <div className="rounded-xl border app-surface p-5">
+        {/* Text Size & Font Zoom (Separate Mobile & PC profiles, collapsed by default) */}
+        <div className="rounded-xl border app-surface p-5">
         <button
           type="button"
           onClick={() => setShowTextZoom((v) => !v)}
@@ -580,7 +688,37 @@ export const PreferencesView: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+
+        {/* Preferences Save Bar & Confirmation (Below Text Size & Font Zoom) */}
+        <div className="rounded-xl border app-surface px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs">
+            {errorMsg ? (
+              <span className="text-rose-400 font-medium">{errorMsg}</span>
+            ) : savedMsg ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-500 font-medium">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{savedMsg}</span>
+              </span>
+            ) : hasUnsavedChanges ? (
+              <span className="text-amber-400 font-medium">
+                You have unsaved changes. Click Save to apply.
+              </span>
+            ) : (
+              <span className="app-text-muted">All preference settings are saved.</span>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-semibold text-white min-h-[40px] disabled:opacity-60"
+            style={{backgroundColor: 'var(--accent-primary)'}}
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{saving ? 'Saving...' : t(settings.language, 'save')}</span>
+          </button>
+        </div>
+      </form>
 
       {/* Application Information */}
       <div className="rounded-xl border app-surface p-5 space-y-2">

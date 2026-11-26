@@ -1,13 +1,105 @@
 export const APP_NAME = 'MyFirst Account';
-export const APP_VERSION = '1.28';
+export const APP_VERSION = '1.29';
 
 export type Language = 'en' | 'ta' | 'tanglish';
 
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP' | 'SGD' | 'AED' | 'MYR';
 
-export type ThemeMode = 'dark' | 'gray';
+export type ThemeMode = 'dark' | 'gray' | 'custom';
+
+export interface CustomThemeColors {
+  canvasBg: string;
+  surfaceBg: string;
+  textPrimary: string;
+  accentPrimary: string;
+  brandTitle: string;
+}
+
+export const DEFAULT_CUSTOM_THEME: CustomThemeColors = {
+  canvasBg: '#0B132B',
+  surfaceBg: '#1C2541',
+  textPrimary: '#F8FAFC',
+  accentPrimary: '#10B981',
+  brandTitle: '#38BDF8',
+};
+
+export const CUSTOM_THEME_PRESETS: Array<{
+  name: string;
+  subtitle: string;
+  colors: CustomThemeColors;
+}> = [
+  {
+    name: 'Midnight Indigo',
+    subtitle: 'Deep Navy & Sky',
+    colors: DEFAULT_CUSTOM_THEME,
+  },
+  {
+    name: 'Emerald Forest',
+    subtitle: 'Dark Pine & Mint',
+    colors: {
+      canvasBg: '#071712',
+      surfaceBg: '#102A22',
+      textPrimary: '#ECFDF5',
+      accentPrimary: '#059669',
+      brandTitle: '#34D399',
+    },
+  },
+  {
+    name: 'Warm Espresso',
+    subtitle: 'Charcoal Cocoa & Amber',
+    colors: {
+      canvasBg: '#16110E',
+      surfaceBg: '#241B16',
+      textPrimary: '#FAF5F0',
+      accentPrimary: '#D97706',
+      brandTitle: '#FBBF24',
+    },
+  },
+  {
+    name: 'Soft Paper',
+    subtitle: 'Clean Warm Light',
+    colors: {
+      canvasBg: '#EFECE6',
+      surfaceBg: '#FAF8F5',
+      textPrimary: '#1C1917',
+      accentPrimary: '#059669',
+      brandTitle: '#1D4ED8',
+    },
+  },
+];
+
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+export function normalizeCustomTheme(
+  raw?: Partial<CustomThemeColors> | null
+): CustomThemeColors {
+  return {
+    canvasBg:
+      raw?.canvasBg && HEX_RE.test(raw.canvasBg)
+        ? raw.canvasBg
+        : DEFAULT_CUSTOM_THEME.canvasBg,
+    surfaceBg:
+      raw?.surfaceBg && HEX_RE.test(raw.surfaceBg)
+        ? raw.surfaceBg
+        : DEFAULT_CUSTOM_THEME.surfaceBg,
+    textPrimary:
+      raw?.textPrimary && HEX_RE.test(raw.textPrimary)
+        ? raw.textPrimary
+        : DEFAULT_CUSTOM_THEME.textPrimary,
+    accentPrimary:
+      raw?.accentPrimary && HEX_RE.test(raw.accentPrimary)
+        ? raw.accentPrimary
+        : DEFAULT_CUSTOM_THEME.accentPrimary,
+    brandTitle:
+      raw?.brandTitle && HEX_RE.test(raw.brandTitle)
+        ? raw.brandTitle
+        : DEFAULT_CUSTOM_THEME.brandTitle,
+  };
+}
 
 export type DateFormat = 'DD-MM-YYYY' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' | 'DD MMM YYYY';
+
+export type TimeFormat = '12h' | '24h';
 
 export type NumberFormat = 'indian' | 'international';
 
@@ -82,7 +174,9 @@ export interface AppSettings {
   language: Language;
   currency: CurrencyCode;
   theme: ThemeMode;
+  customTheme?: CustomThemeColors;
   dateFormat: DateFormat;
+  timeFormat?: TimeFormat;
   numberFormat: NumberFormat;
   openingBalance: number;
   openingBalanceDate: string;

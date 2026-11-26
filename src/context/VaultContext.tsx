@@ -41,12 +41,19 @@ import {
   saveVaultMeta,
   secureWipeDatabase,
 } from '../db/indexedDb';
-import {APP_VERSION, DEFAULT_FONT_ZOOM, normalizeFontZoom} from '../types/finance';
+import {
+  APP_VERSION,
+  DEFAULT_CUSTOM_THEME,
+  DEFAULT_FONT_ZOOM,
+  normalizeCustomTheme,
+  normalizeFontZoom,
+} from '../types/finance';
 import type {
   AppSettings,
   AutoBackupRecord,
   Category,
   CurrencyCode,
+  CustomThemeColors,
   DateFormat,
   EncryptedBackupFile,
   FontZoomSettings,
@@ -61,6 +68,7 @@ import type {
   VaultMeta,
 } from '../types/finance';
 import {findDuplicateTransaction, generateTransactionId, getTodayISO} from '../utils/formatters';
+import {applyThemeToDocument} from '../utils/themeUtils';
 
 export type VaultStatus = 'loading' | 'needs_setup' | 'locked' | 'unlocked';
 
@@ -104,6 +112,7 @@ interface VaultContextValue {
   lockVault: () => void;
   updateSettings: (partial: Partial<AppSettings>) => Promise<void>;
   setTheme: (theme: ThemeMode) => Promise<void>;
+  setCustomTheme: (colors: CustomThemeColors) => Promise<void>;
   setFontZoom: (fontZoom: FontZoomSettings) => Promise<void>;
   addTransaction: (input: {
     date: string;
@@ -151,7 +160,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   language: 'en',
   currency: 'EUR',
   theme: 'dark',
+  customTheme: DEFAULT_CUSTOM_THEME,
   dateFormat: 'DD-MM-YYYY',
+  timeFormat: '12h',
   numberFormat: 'international',
   openingBalance: 0,
   openingBalanceDate: getTodayISO(),
@@ -219,21 +230,18 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
   const dekRef = useRef<CryptoKey | null>(null);
   const idleTimerRef = useRef<number | null>(null);
 
-  const applyThemeClass = useCallback((theme: ThemeMode) => {
-    const html = document.documentElement;
-    if (theme === 'dark') {
-      html.classList.add('theme-dark', 'dark');
-      html.classList.remove('theme-gray');
-    } else {
-      html.classList.add('theme-gray');
-      html.classList.remove('theme-dark', 'dark');
-    }
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) {
-      metaTheme.setAttribute('content', theme === 'dark' ? '#0A0E17' : '#E4E7EC');
-    }
-    localStorage.setItem('mfa_preferred_theme', theme);
-  }, []);
+  const themeRef = useRef<ThemeMode>(DEFAULT_SETTINGS.theme);
+  const customThemeRef = useRef<CustomThemeColors>(DEFAULT_CUSTOM_THEME);
+
+  const applyThemeClass = useCallback(
+    (theme: ThemeMode, customColors?: Partial<CustomThemeColors> | null) => {
+      const normalized = normalizeCustomTheme(customColors ?? customThemeRef.current);
+      themeRef.current = theme;
+      customThemeRef.current = normalized;
+      applyThemeToDocument(theme, normalized);
+    },
+    []
+  );
 
   const applyFontZoomVars = useCallback((zoom?: Partial<FontZoomSettings> | null) => {
     const normalized = normalizeFontZoom(zoom);
@@ -252,8 +260,20 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
   }, []);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('mfa_preferred_theme') as ThemeMode | null;
-    applyThemeClass(savedTheme === 'gray' ? 'gray' : 'dark');
+    const savedThemeRaw = localStorage.getItem('mfa_preferred_theme');
+    const savedTheme: ThemeMode =
+      savedThemeRaw === 'gray' || savedThemeRaw === 'custom' ? savedThemeRaw : 'dark';
+    let savedCustom = DEFAULT_CUSTOM_THEME;
+    try {
+      const rawCustom = localStorage.getItem('mfa_custom_theme');
+      if (rawCustom) {
+        savedCustom = normalizeCustomTheme(JSON.parse(rawCustom) as CustomThemeColors);
+      }
+    } catch {
+      savedCustom = DEFAULT_CUSTOM_THEME;
+    }
+    applyThemeClass(savedTheme, savedCustom);
+    setSettings((prev) => ({...prev, theme: savedTheme, customTheme: savedCustom}));
     try {
       const savedZoom = localStorage.getItem('mfa_font_zoom');
       if (savedZoom) {
@@ -267,8 +287,8 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
   }, [applyThemeClass, applyFontZoomVars]);
 
   useEffect(() => {
-    applyThemeClass(settings.theme);
-  }, [settings.theme, applyThemeClass]);
+    applyThemeClass(settings.theme, settings.customTheme);
+  }, [settings.theme, settings.customTheme, applyThemeClass]);
 
   useEffect(() => {
     applyFontZoomVars(settings.fontZoom);
@@ -347,7 +367,12 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
         getSchemaMigrations(),
       ]);
 
-    const baseSettings = loadedSettings || DEFAULT_SETTINGS;
+    const baseSettings: AppSettings = {
+      ...DEFAULT_SETTINGS,
+      ...(loadedSettings || {}),
+      timeFormat: loadedSettings?.timeFormat === '24h' ? '24h' : '12h',
+      customTheme: normalizeCustomTheme(loadedSettings?.customTheme),
+    };
     const migratedSettings = await ensureDataSchemaMigrations(dek, baseSettings);
     const updatedMigrations = loadedMigrations.length > 0 ? loadedMigrations : await getSchemaMigrations();
 
@@ -537,11 +562,24 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
 
   const setTheme = useCallback(
     async (theme: ThemeMode) => {
-      applyThemeClass(theme);
+      applyThemeClass(theme, customThemeRef.current);
       if (dekRef.current) {
         await updateSettings({theme});
       } else {
         setSettings((prev) => ({...prev, theme}));
+      }
+    },
+    [applyThemeClass, updateSettings]
+  );
+
+  const setCustomTheme = useCallback(
+    async (colors: CustomThemeColors) => {
+      const normalized = normalizeCustomTheme(colors);
+      applyThemeClass(themeRef.current, normalized);
+      if (dekRef.current) {
+        await updateSettings({customTheme: normalized});
+      } else {
+        setSettings((prev) => ({...prev, customTheme: normalized}));
       }
     },
     [applyThemeClass, updateSettings]
@@ -1165,6 +1203,7 @@ export const VaultProvider: React.FC<{children: React.ReactNode}> = ({children})
     lockVault,
     updateSettings,
     setTheme,
+    setCustomTheme,
     setFontZoom,
     addTransaction,
     addBatchTransactions,

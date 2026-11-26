@@ -61,6 +61,7 @@ export const PreferencesView: React.FC = () => {
 
   const [showFormatting, setShowFormatting] = useState(false);
   const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [showCustomColors, setShowCustomColors] = useState(false);
   const [showTextZoom, setShowTextZoom] = useState(false);
   const [zoomDevice, setZoomDevice] = useState<'mobile' | 'desktop'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'desktop' : 'mobile'
@@ -167,6 +168,7 @@ export const PreferencesView: React.FC = () => {
         openingBalance: val,
         openingBalanceDate,
       });
+      setShowCustomColors(false);
       setSavedMsg('Preferences saved successfully.');
       window.setTimeout(() => setSavedMsg(''), 3500);
     } catch (err) {
@@ -414,11 +416,23 @@ export const PreferencesView: React.FC = () => {
           <div className="rounded-xl border app-surface p-5 flex flex-col gap-4 h-full">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold">Theme Mode</h2>
-              <span className="text-xs app-text-muted">Instant Switch</span>
+              {themeMode === 'custom' ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCustomColors((v) => !v)}
+                  aria-expanded={showCustomColors}
+                  className="inline-flex items-center gap-1.5 rounded-lg border app-border app-surface-elevated px-2.5 py-1 text-xs font-medium app-text-secondary hover:border-emerald-500/50"
+                >
+                  <span>{showCustomColors ? 'Hide Colors' : 'Customize Colors'}</span>
+                  {showCustomColors ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
+              ) : (
+                <span className="text-xs app-text-muted">Instant Switch</span>
+              )}
             </div>
             <div
               className={`grid grid-cols-1 sm:grid-cols-3 gap-2.5 ${
-                themeMode !== 'custom' ? 'flex-1 lg:max-h-[120px]' : ''
+                !(themeMode === 'custom' && showCustomColors) ? 'flex-1 lg:max-h-[120px]' : ''
               }`}
             >
               {(
@@ -427,35 +441,53 @@ export const PreferencesView: React.FC = () => {
                   {id: 'gray', title: 'Gray Mode', sub: 'Soft Ash Gray'},
                   {id: 'custom', title: 'Custom Mode', sub: 'Your Colors'},
                 ] as Array<{id: ThemeMode; title: string; sub: string}>
-              ).map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  onClick={() => {
-                    setThemeMode(mode.id);
-                    void setTheme(mode.id);
-                  }}
-                  className={`flex items-center justify-between rounded-xl border p-3.5 text-left min-h-[72px] ${
-                    themeMode !== 'custom' ? 'h-full' : ''
-                  } ${
-                    themeMode === mode.id
-                      ? 'border-emerald-500 bg-emerald-500/10'
-                      : 'app-border'
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold flex items-center gap-1.5">
-                      {mode.id === 'custom' && <Palette className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
-                      <span className="truncate">{mode.title}</span>
+              ).map((mode) => {
+                const isCustomPanelOpen = themeMode === 'custom' && showCustomColors;
+                return (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => {
+                      if (mode.id === 'custom') {
+                        if (themeMode === 'custom') {
+                          setShowCustomColors((v) => !v);
+                        } else {
+                          setThemeMode('custom');
+                          void setTheme('custom');
+                          setShowCustomColors(true);
+                        }
+                      } else {
+                        setThemeMode(mode.id);
+                        void setTheme(mode.id);
+                        setShowCustomColors(false);
+                      }
+                    }}
+                    className={`relative flex items-center rounded-xl border px-3 py-3 text-left min-h-[72px] ${
+                      !isCustomPanelOpen ? 'h-full' : ''
+                    } ${
+                      themeMode === mode.id
+                        ? 'border-emerald-500 bg-emerald-500/10'
+                        : 'app-border'
+                    }`}
+                  >
+                    <div className="min-w-0 w-full">
+                      <div className="text-[13px] font-semibold flex items-center gap-1.5 pr-4">
+                        {mode.id === 'custom' && (
+                          <Palette className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        )}
+                        <span className="whitespace-nowrap">{mode.title}</span>
+                      </div>
+                      <div className="text-xs app-text-muted mt-0.5 truncate">{mode.sub}</div>
                     </div>
-                    <div className="text-xs app-text-muted mt-0.5 truncate">{mode.sub}</div>
-                  </div>
-                  {themeMode === mode.id && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
-                </button>
-              ))}
+                    {themeMode === mode.id && (
+                      <Check className="w-3.5 h-3.5 text-emerald-500 absolute top-2.5 right-2.5 shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            {themeMode === 'custom' && (
+            {themeMode === 'custom' && showCustomColors && (
               <div className="pt-3 border-t app-border space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-medium app-text-secondary">

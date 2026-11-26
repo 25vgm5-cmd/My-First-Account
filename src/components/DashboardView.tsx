@@ -148,7 +148,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
-        <div className="no-print flex flex-wrap items-center gap-2">
+        <div className="no-print hidden lg:flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => window.print()}

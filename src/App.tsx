@@ -8,9 +8,12 @@ import {
   ListOrdered,
   Lock,
   Menu,
+  Moon,
   Plus,
+  Printer,
   Settings,
   ShieldCheck,
+  Sun,
   X,
 } from 'lucide-react';
 import {AnnualReportsView} from './components/AnnualReportsView';
@@ -33,7 +36,7 @@ import type {ActiveTab, Transaction, TransactionType} from './types/finance';
 import {formatMoney} from './utils/formatters';
 
 const AppShell: React.FC = () => {
-  const {status, settings, summary, lockVault} = useVault();
+  const {status, settings, summary, setTheme, lockVault} = useVault();
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -221,6 +224,28 @@ const AppShell: React.FC = () => {
           <BrandTitle size="mobile" />
           <div className="flex items-center gap-1.5 shrink-0">
             <PWAInstallButton compact />
+            <button
+              type="button"
+              onClick={() => window.print()}
+              title={t(settings.language, 'printLedger')}
+              className="p-1.5 rounded-lg border app-border app-text-secondary active:scale-95 transition-transform min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label={t(settings.language, 'printLedger')}
+            >
+              <Printer className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void setTheme(settings.theme === 'dark' ? 'gray' : 'dark')}
+              title={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+              className="p-1.5 rounded-lg border app-border app-text-secondary active:scale-95 transition-transform min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label={settings.theme === 'dark' ? 'Switch to Gray Mode' : 'Switch to Dark Mode'}
+            >
+              {settings.theme === 'dark' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </button>
             <button
               type="button"
               onClick={lockVault}

@@ -52,7 +52,12 @@ export const PreferencesView: React.FC = () => {
   );
   const [numberFormat, setNumberFormat] = useState<NumberFormat>(settings.numberFormat);
   const [themeMode, setThemeMode] = useState<ThemeMode>(settings.theme);
-  const [openingBalance, setOpeningBalance] = useState(String(settings.openingBalance));
+  const [openingBalance, setOpeningBalance] = useState(
+    String(Math.abs(settings.openingBalance || 0))
+  );
+  const [openingBalanceType, setOpeningBalanceType] = useState<'income' | 'expense'>(
+    settings.openingBalance < 0 ? 'expense' : 'income'
+  );
   const [openingBalanceDate, setOpeningBalanceDate] = useState(settings.openingBalanceDate);
 
   const [saving, setSaving] = useState(false);
@@ -119,7 +124,8 @@ export const PreferencesView: React.FC = () => {
   }, [settings.theme]);
 
   useEffect(() => {
-    setOpeningBalance(String(settings.openingBalance));
+    setOpeningBalance(String(Math.abs(settings.openingBalance || 0)));
+    setOpeningBalanceType(settings.openingBalance < 0 ? 'expense' : 'income');
   }, [settings.openingBalance]);
 
   useEffect(() => {
@@ -136,14 +142,20 @@ export const PreferencesView: React.FC = () => {
   };
 
   const savedTimeFormat: TimeFormat = settings.timeFormat === '24h' ? '24h' : '12h';
-  const parsedBalance = parseFloat(openingBalance || '0');
+  const parsedMagnitude = parseFloat(openingBalance || '0');
+  const signedOpeningBalance =
+    !Number.isFinite(parsedMagnitude) || parsedMagnitude === 0
+      ? 0
+      : openingBalanceType === 'expense'
+        ? -Math.abs(parsedMagnitude)
+        : Math.abs(parsedMagnitude);
   const hasUnsavedChanges =
     language !== settings.language ||
     currency !== settings.currency ||
     dateFormat !== settings.dateFormat ||
     timeFormat !== savedTimeFormat ||
     numberFormat !== settings.numberFormat ||
-    parsedBalance !== settings.openingBalance ||
+    signedOpeningBalance !== settings.openingBalance ||
     openingBalanceDate !== settings.openingBalanceDate;
 
   const handleSavePreferences = async (e: React.FormEvent) => {
@@ -151,11 +163,17 @@ export const PreferencesView: React.FC = () => {
     setErrorMsg('');
     setSavedMsg('');
 
-    const val = parseFloat(openingBalance || '0');
-    if (!Number.isFinite(val) || val < 0) {
-      setErrorMsg('Opening Balance must be 0 or a valid positive amount.');
+    const rawMag = parseFloat(openingBalance || '0');
+    if (!Number.isFinite(rawMag)) {
+      setErrorMsg('Opening Balance must be a valid amount.');
       return;
     }
+    const val =
+      rawMag === 0
+        ? 0
+        : rawMag < 0 || openingBalanceType === 'expense'
+          ? -Math.abs(rawMag)
+          : Math.abs(rawMag);
 
     setSaving(true);
     try {
@@ -364,11 +382,9 @@ export const PreferencesView: React.FC = () => {
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold">{t(settings.language, 'openingBalance')}</h2>
                   <p className="text-xs app-text-muted mt-0.5 font-mono-tabular truncate">
-                    {formatMoney(
-                      Number.isFinite(parsedBalance) ? parsedBalance : 0,
-                      currency,
-                      numberFormat
-                    )}{' '}
+                    {formatMoney(signedOpeningBalance, currency, numberFormat, {
+                      showSign: signedOpeningBalance !== 0,
+                    })}{' '}
                     · {openingBalanceDate}
                   </p>
                 </div>
@@ -378,34 +394,78 @@ export const PreferencesView: React.FC = () => {
               </button>
 
               {showOpeningBalance && (
-                <div className="mt-4 pt-4 border-t app-border grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="mt-4 pt-4 border-t app-border space-y-3">
                   <div>
-                    <label className="block text-xs font-medium mb-1">
-                      Amount ({CURRENCY_META[currency].symbol})
+                    <label className="block text-xs font-medium mb-1.5">
+                      Opening Balance Type
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={openingBalance}
-                      onChange={(e) => {
-                        setOpeningBalance(e.target.value);
-                        setSavedMsg('');
-                      }}
-                      className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
-                    />
+                    <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpeningBalanceType('income');
+                          setSavedMsg('');
+                        }}
+                        className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[38px] ${
+                          openingBalanceType === 'income'
+                            ? 'bg-emerald-600 text-white'
+                            : 'app-text-muted'
+                        }`}
+                      >
+                        + {t(settings.language, 'income')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpeningBalanceType('expense');
+                          setSavedMsg('');
+                        }}
+                        className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[38px] ${
+                          openingBalanceType === 'expense'
+                            ? 'bg-rose-600 text-white'
+                            : 'app-text-muted'
+                        }`}
+                      >
+                        − {t(settings.language, 'expenses')}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">As of Date</label>
-                    <input
-                      type="date"
-                      value={openingBalanceDate}
-                      onChange={(e) => {
-                        setOpeningBalanceDate(e.target.value);
-                        setSavedMsg('');
-                      }}
-                      className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
-                    />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">
+                        Amount ({CURRENCY_META[currency].symbol})
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={openingBalance}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw.startsWith('-')) {
+                            setOpeningBalanceType('expense');
+                            setOpeningBalance(raw.slice(1));
+                          } else {
+                            setOpeningBalance(raw);
+                          }
+                          setSavedMsg('');
+                        }}
+                        className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">As of Date</label>
+                      <input
+                        type="date"
+                        value={openingBalanceDate}
+                        onChange={(e) => {
+                          setOpeningBalanceDate(e.target.value);
+                          setSavedMsg('');
+                        }}
+                        className="w-full rounded-lg border app-input px-3 py-2 text-sm font-mono-tabular min-h-[42px]"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

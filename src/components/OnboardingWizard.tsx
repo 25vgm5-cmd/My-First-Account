@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import {benchmarkPBKDF2} from '../crypto/webCrypto';
 import {useVault} from '../context/VaultContext';
+import {t} from '../i18n/translations';
 import type {
   CurrencyCode,
   DateFormat,
@@ -33,6 +34,7 @@ export const OnboardingWizard: React.FC = () => {
   const [numberFormat, setNumberFormat] = useState<NumberFormat>('international');
 
   const [openingBalance, setOpeningBalance] = useState('0');
+  const [openingBalanceType, setOpeningBalanceType] = useState<'income' | 'expense'>('income');
   const [openingBalanceDate, setOpeningBalanceDate] = useState(getTodayISO());
 
   const [password, setPassword] = useState('');
@@ -103,11 +105,17 @@ export const OnboardingWizard: React.FC = () => {
       return;
     }
 
-    const parsedBal = parseFloat(openingBalance || '0');
-    if (!Number.isFinite(parsedBal) || parsedBal < 0) {
-      setError('Opening Balance must be 0 or a valid positive amount.');
+    const rawMag = parseFloat(openingBalance || '0');
+    if (!Number.isFinite(rawMag)) {
+      setError('Opening Balance must be a valid amount.');
       return;
     }
+    const parsedBal =
+      rawMag === 0
+        ? 0
+        : rawMag < 0 || openingBalanceType === 'expense'
+          ? -Math.abs(rawMag)
+          : Math.abs(rawMag);
 
     setSubmitting(true);
     try {
@@ -367,6 +375,34 @@ export const OnboardingWizard: React.FC = () => {
                 Enter your starting cash or bank balance before logging new entries. You can adjust this later in Preferences.
               </p>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Opening Balance Type</label>
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border app-border app-surface-elevated">
+                <button
+                  type="button"
+                  onClick={() => setOpeningBalanceType('income')}
+                  className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[40px] ${
+                    openingBalanceType === 'income'
+                      ? 'bg-emerald-600 text-white'
+                      : 'app-text-muted'
+                  }`}
+                >
+                  + {t(language, 'income')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpeningBalanceType('expense')}
+                  className={`py-2 text-xs font-semibold rounded-md transition-colors min-h-[40px] ${
+                    openingBalanceType === 'expense'
+                      ? 'bg-rose-600 text-white'
+                      : 'app-text-muted'
+                  }`}
+                >
+                  − {t(language, 'expenses')}
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">
@@ -377,7 +413,15 @@ export const OnboardingWizard: React.FC = () => {
                   step="0.01"
                   min="0"
                   value={openingBalance}
-                  onChange={(e) => setOpeningBalance(e.target.value)}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw.startsWith('-')) {
+                      setOpeningBalanceType('expense');
+                      setOpeningBalance(raw.slice(1));
+                    } else {
+                      setOpeningBalance(raw);
+                    }
+                  }}
                   className="w-full rounded-lg border app-input px-3.5 py-2.5 text-sm font-mono-tabular min-h-[44px]"
                   placeholder="0.00"
                 />

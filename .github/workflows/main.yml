@@ -63,7 +63,7 @@ jobs:
             npx cap add android
           fi
 
-      - name: Apply MyFirst App launcher icons
+      - name: Apply MyFirst App launcher icons & adaptive background
         run: |
           if [ -f "public/pwa-512x512.png" ]; then
             FOREGROUND_ICON="public/pwa-512x512.png"
@@ -78,7 +78,25 @@ jobs:
               fi
             done
           fi
+          if [ -f "android/app/src/main/res/values/ic_launcher_background.xml" ]; then
+            sed -i -E 's/#[0-9A-Fa-f]{6}/#0B1B3B/g' android/app/src/main/res/values/ic_launcher_background.xml
+          fi
         continue-on-error: true
+
+      - name: Configure Fixed Android Signing Key & App Version
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ -f "scripts/android-debug.keystore" ]; then
+            cp -f "scripts/android-debug.keystore" "$HOME/.android/debug.keystore"
+            keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
+          fi
+          APP_VER=$(node -e "const fs=require('fs');const m=fs.readFileSync('src/types/finance.ts','utf8').match(/APP_VERSION\\s*=\\s*'([^']+)'/);console.log(m?m[1]:'1.0');")
+          VER_CODE=$(node -e "const v='$APP_VER'.split('.').map(Number);console.log((v[0]||1)*100+(v[1]||0));")
+          echo "Syncing Android build.gradle -> versionName=$APP_VER, versionCode=$VER_CODE"
+          if [ -f "android/app/build.gradle" ]; then
+            sed -i -E "s/versionCode [0-9]+/versionCode $VER_CODE/" android/app/build.gradle
+            sed -i -E "s/versionName \"[^\"]+\"/versionName \"$APP_VER\"/" android/app/build.gradle
+          fi
 
       - name: Sync Capacitor Android assets & plugins
         run: npx cap sync android

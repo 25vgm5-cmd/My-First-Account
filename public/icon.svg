@@ -1,8 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="112" fill="#0A0E17"/>
-  <rect x="44" y="44" width="424" height="424" rx="84" stroke="#1E293B" stroke-width="8"/>
-  <path d="M132 164C132 146.327 146.327 132 164 132H348C365.673 132 380 146.327 380 164V348C380 365.673 365.673 380 348 380H164C146.327 380 132 365.673 132 348V164Z" fill="#121824" stroke="#10B981" stroke-width="14"/>
-  <path d="M184 282L232 234L270 272L332 204" stroke="#10B981" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M294 204H332V242" stroke="#10B981" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="184" y="320" width="144" height="16" rx="8" fill="#334155"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#122B5E"/>
+      <stop offset="100%" stop-color="#08132B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="188" fill="#D8EBFF"/>
+  <!-- Shoulders & Suit -->
+  <path d="M116 384C126 322 184 294 256 294C328 294 386 322 396 384C362 422 312 444 256 444C200 444 150 422 116 384Z" fill="#1345A3"/>
+  <!-- Shirt & Tie -->
+  <path d="M214 298L256 410L298 298H214Z" fill="#EFF6FF"/>
+  <path d="M244 316H268L274 374L256 416L238 374L244 316Z" fill="#EA9B1E"/>
+  <path d="M218 286L256 320L294 286L282 268L256 292L230 268L218 286Z" fill="#93C5FD"/>
+  <!-- Neck & Face -->
+  <rect x="228" y="246" width="56" height="44" rx="20" fill="#F29F74"/>
+  <circle cx="190" cy="212" r="20" fill="#FBB48E"/>
+  <circle cx="322" cy="212" r="20" fill="#FBB48E"/>
+  <rect x="196" y="138" width="120" height="132" rx="58" fill="#FBB48E"/>
+  <!-- Hair -->
+  <path d="M188 186C182 140 212 104 258 104C304 104 330 134 326 184C314 154 292 142 278 140C256 156 220 162 198 156L188 186Z" fill="#5A2D18"/>
+  <!-- Eyes & Smile -->
+  <circle cx="228" cy="204" r="9" fill="#3B2314"/>
+  <circle cx="284" cy="204" r="9" fill="#3B2314"/>
+  <path d="M234 234C244 248 268 248 278 234H234Z" fill="#FFFFFF"/>
+  <!-- Security Key Badge -->
+  <circle cx="364" cy="364" r="76" fill="#0B7D54" stroke="#EAB308" stroke-width="8"/>
+  <circle cx="384" cy="344" r="22" stroke="#FFFFFF" stroke-width="11"/>
+  <path d="M368 360L334 394M344 384L356 396M356 372L368 384" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
 </svg>

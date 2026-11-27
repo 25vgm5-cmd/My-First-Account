@@ -41,6 +41,7 @@ export function usePWAInstall() {
   );
   const [isInstalled, setIsInstalled] = useState(globalIsInstalled);
   const [isIOS, setIsIOS] = useState(false);
+  const [isIPad, setIsIPad] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
@@ -52,7 +53,13 @@ export function usePWAInstall() {
     sync();
 
     const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+    const isTouchMac =
+      window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
+    const detectedIPad = /ipad/.test(userAgent) || isTouchMac;
+    const detectedIOS = /iphone|ipad|ipod/.test(userAgent) || isTouchMac;
+
+    setIsIPad(detectedIPad);
+    setIsIOS(detectedIOS);
 
     try {
       setIsInIframe(window.self !== window.top);
@@ -93,6 +100,7 @@ export function usePWAInstall() {
     isInstallable: Boolean(deferredPrompt),
     isInstalled,
     isIOS,
+    isIPad,
     isInIframe,
     install,
   };
